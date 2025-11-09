@@ -1,0 +1,31 @@
+name: Lint and Test Workflow
+
+on:
+  workflow_dispatch:
+  push:
+    
+
+jobs:
+  SmartQ:
+    runs-on: ubuntu-latest
+    container: python:3.12
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-tags: false
+        fetch-depth: 1
+
+    - name: Install uv
+      run: pip install uv
+
+    - name: Create virtual environment
+      run: uv venv
+
+    - name: Install optional dependencies with uv
+      run: uv pip install .[dev]
+
+    - name: Run Ruff
+      run: uv run ruff check .
+
+    - name: Run ty
+      run : uv run ty check .
