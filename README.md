@@ -1,16 +1,15 @@
 # Project Name
 
-[![Python Version](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![Python Version](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 A brief, compelling description of what your project does and why it's useful.
 
 ## Features
 
-- 🚀 Feature 1: Brief description
-- 📊 Feature 2: Brief description
-- 🔧 Feature 3: Brief description
-- ✨ Feature 4: Brief description
+- Feature 1: Brief description
+- Feature 2: Brief description
+- Feature 3: Brief description
 
 ## Table of Contents
 
@@ -18,24 +17,26 @@ A brief, compelling description of what your project does and why it's useful.
 - [Quick Start](#quick-start)
 - [Usage](#usage)
 - [Configuration](#configuration)
-- [API Reference](#api-reference)
 - [Development](#development)
 - [Testing](#testing)
 - [Contributing](#contributing)
 - [License](#license)
-- [Contact](#contact)
 
 ## Installation
 
 ### Prerequisites
 
-- Python 3.8 or higher
-- pip (Python package installer)
+- Python 3.12 or higher
+- [uv](https://docs.astral.sh/uv/) (Python package & project manager)
 
-### Install from PyPI
+### Install uv
 
 ```bash
-pip install your-package-name
+# macOS / Linux
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Windows
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
 ```
 
 ### Install from source
@@ -45,19 +46,19 @@ pip install your-package-name
 git clone https://github.com/yourusername/your-repo-name.git
 cd your-repo-name
 
-# Install dependencies
-pip install -e .
+# Install dependencies (automatically creates .venv)
+uv sync
 ```
 
 ## Quick Start
 
 ```python
-from your_package import YourMainClass
+from your_package.core import YourMainClass
 
 # Initialize
-instance = YourMainClass()
+instance = YourMainClass(param1="hello")
 
-# Basic usage example
+# Basic usage
 result = instance.do_something()
 print(result)
 ```
@@ -67,32 +68,25 @@ print(result)
 ### Basic Example
 
 ```python
-import your_package
+from your_package.core import YourMainClass
+from your_package.utils import helper_function
 
-# Example 1: Common use case
-example1 = your_package.function1(param1="value")
+# Example 1: Using the main class
+obj = YourMainClass(param1="value", param2=42)
+result = obj.do_something()
 
-# Example 2: Another common pattern
-example2 = your_package.function2(
-    param1="value1",
-    param2="value2"
-)
+# Example 2: Using utility functions
+cleaned = helper_function("  some text  ")
 ```
 
 ### Advanced Usage
 
 ```python
-# More complex examples
-from your_package import AdvancedFeature
+from your_package.core import YourMainClass
 
 # Advanced configuration
-config = {
-    'option1': 'value1',
-    'option2': 'value2'
-}
-
-feature = AdvancedFeature(**config)
-result = feature.process()
+obj = YourMainClass(param1="advanced", param2=100)
+result = obj.do_something()
 ```
 
 ## Configuration
@@ -118,44 +112,6 @@ database:
   port: 5432
 ```
 
-## API Reference
-
-### Main Classes
-
-#### `YourMainClass`
-
-Main class description.
-
-**Parameters:**
-- `param1` (str): Description of param1
-- `param2` (int, optional): Description of param2. Default: 10
-
-**Methods:**
-- `method1(arg)`: Description of what this method does
-- `method2(arg1, arg2)`: Description of what this method does
-
-**Example:**
-```python
-obj = YourMainClass(param1="value")
-result = obj.method1("argument")
-```
-
-### Key Functions
-
-#### `important_function(arg1, arg2)`
-
-Description of the function.
-
-**Parameters:**
-- `arg1` (str): Description
-- `arg2` (list): Description
-
-**Returns:**
-- `dict`: Description of return value
-
-**Raises:**
-- `ValueError`: When invalid input is provided
-
 ## Development
 
 ### Setting up development environment
@@ -165,48 +121,47 @@ Description of the function.
 git clone https://github.com/yourusername/your-repo-name.git
 cd your-repo-name
 
-# Create virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-# Install development dependencies
-pip install -e ".[dev]"
+# Install all dependencies including dev tools
+# (uv automatically creates a .venv — no need to manually create one)
+uv sync --extra dev
 ```
 
 ### Code Style
 
 This project uses:
-- `black` for code formatting
-- `isort` for import sorting
-- `flake8` for linting
-- `mypy` for type checking
+- [ruff](https://docs.astral.sh/ruff/) for linting and code formatting
+- [ty](https://docs.astral.sh/ty/) for type checking
 
-Run formatters and linters:
+Run linter and formatter:
 
 ```bash
-# Format code
-black src/
-isort src/
+# Check for lint errors
+uv run ruff check .
 
-# Lint
-flake8 src/
-mypy src/
+# Auto-fix lint errors
+uv run ruff check --fix .
+
+# Format code
+uv run ruff format .
+
+# Type check
+uv run ty check .
 ```
 
 ## Testing
 
 ```bash
 # Run all tests
-pytest
+uv run pytest
 
 # Run with coverage
-pytest --cov=your_package tests/
+uv run pytest --cov=your_package
 
 # Run specific test file
-pytest tests/test_module.py
+uv run pytest tests/test_core.py
 
 # Run with verbose output
-pytest -v
+uv run pytest -v
 ```
 
 ## Project Structure
@@ -220,13 +175,16 @@ your-project/
 │       └── utils.py
 ├── tests/
 │   ├── __init__.py
-│   ├── test_core.py
-│   └── test_utils.py
+│   └── test_core.py
 ├── docs/
 │   └── index.md
 ├── examples/
 │   └── example.py
+├── .github/
+│   └── workflows/
+│       └── test-build.yml
 ├── pyproject.toml
+├── uv.lock
 ├── README.md
 ├── LICENSE
 └── .gitignore
@@ -237,40 +195,26 @@ your-project/
 Contributions are welcome! Please feel free to submit a Pull Request.
 
 1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-Please make sure to:
-- Update tests as appropriate
-- Update documentation
-- Follow the existing code style
-- Add your changes to CHANGELOG.md
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Install dev dependencies: `uv sync --extra dev`
+4. Make your changes
+5. Run lint and tests: `uv run ruff check . && uv run pytest`
+6. Commit your changes (`git commit -m 'Add amazing feature'`)
+7. Push to the branch (`git push origin feature/amazing-feature`)
+8. Open a Pull Request
 
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## Acknowledgments
-
-- Credit to any libraries, tools, or people that helped
-- Inspiration sources
-- Special thanks
-
 ## Contact
 
-Your Name - [@yourtwitter](https://twitter.com/yourtwitter) - your.email@example.com
+Your Name - your.email@example.com
 
 Project Link: [https://github.com/yourusername/your-repo-name](https://github.com/yourusername/your-repo-name)
-
-## Changelog
-
-See [CHANGELOG.md](CHANGELOG.md) for a list of changes.
 
 ## Roadmap
 
 - [ ] Feature 1 planned
 - [ ] Feature 2 planned
 - [ ] Feature 3 planned
-- [x] Completed feature

@@ -1,31 +1,34 @@
-name: Lint and Test Workflow
+name: Lint and Test
 
 on:
   workflow_dispatch:
   push:
-    
 
 jobs:
-  SmartQ:
+  lint-and-test:
     runs-on: ubuntu-latest
-    container: python:3.12
     steps:
     - uses: actions/checkout@v4
-      with:
-        fetch-tags: false
-        fetch-depth: 1
 
     - name: Install uv
-      run: pip install uv
+      uses: astral-sh/setup-uv@v7
+      with:
+        enable-cache: true
 
-    - name: Create virtual environment
-      run: uv venv
+    - name: Set up Python
+      run: uv python install 3.12
 
-    - name: Install optional dependencies with uv
-      run: uv pip install .[dev]
+    - name: Install dependencies
+      run: uv sync --locked --extra dev
 
-    - name: Run Ruff
+    - name: Run Ruff (lint)
       run: uv run ruff check .
 
-    - name: Run ty
-      run : uv run ty check .
+    - name: Run Ruff (format check)
+      run: uv run ruff format --check .
+
+    - name: Run ty (type check)
+      run: uv run ty check .
+
+    - name: Run tests
+      run: uv run pytest
