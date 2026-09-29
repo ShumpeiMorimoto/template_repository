@@ -3,6 +3,20 @@ name: Lint and Test
 on:
   workflow_dispatch:
   push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  # Daily, so a suite that rots without a code change (pinned dates, upstream
+  # releases) turns red within 24h instead of at the next push.
+  schedule:
+    - cron: "0 21 * * *"  # 06:00 JST
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   lint-and-test:
@@ -16,10 +30,10 @@ jobs:
         enable-cache: true
 
     - name: Set up Python
-      run: uv python install 3.12
+      run: uv python install
 
     - name: Install dependencies
-      run: uv sync --locked --extra dev
+      run: uv sync --locked
 
     - name: Run Ruff (lint)
       run: uv run ruff check .
@@ -32,3 +46,10 @@ jobs:
 
     - name: Run tests
       run: uv run pytest
+
+    - name: Audit dependencies
+      # Non-blocking on purpose: a permanently-red check protects nothing.
+      # Read this step's output during reviews.
+      run: |
+        uv export --no-hashes --no-emit-project --format requirements-txt -o /tmp/req_audit.txt
+        uv tool run pip-audit -r /tmp/req_audit.txt --no-deps || true

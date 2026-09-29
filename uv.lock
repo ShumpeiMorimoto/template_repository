@@ -215,7 +215,7 @@ name = "your-package-name"
 version = "0.1.0"
 source = { editable = "." }
 
-[package.optional-dependencies]
+[package.dev-dependencies]
 dev = [
     { name = "pytest" },
     { name = "pytest-cov" },
@@ -224,10 +224,11 @@ dev = [
 ]
 
 [package.metadata]
-requires-dist = [
-    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" },
-    { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=6.0" },
-    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.12" },
-    { name = "ty", marker = "extra == 'dev'", specifier = ">=0.0.1a13" },
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "pytest", specifier = ">=8.0" },
+    { name = "pytest-cov", specifier = ">=6.0" },
+    { name = "ruff", specifier = ">=0.12" },
+    { name = "ty", specifier = ">=0.0.1a13" },
 ]
-provides-extras = ["dev"]

@@ -1,0 +1,42 @@
+# Dependencies & runtime
+node_modules/
+.venv/
+venv/
+
+# Build artifacts
+dist/
+build/
+site/
+
+# Cache
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+htmlcov/
+
+# Large data files
+*.csv
+*.parquet
+*.pkl
+*.joblib
+data/
+
+# Lock files
+uv.lock
+package-lock.json
+
+# Generated / non-source
+*.min.js
+*.map
+logs/
+
+# Credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+credentials.json
+token.json

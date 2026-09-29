@@ -12,7 +12,8 @@ requires-python = ">=3.12"
 dependencies = [
 ]
 
-[project.optional-dependencies]
+# PEP 735 groups: `uv sync` installs `dev` by default; `uv sync --no-dev` for production.
+[dependency-groups]
 dev = [
     "pytest>=8.0",
     "pytest-cov>=6.0",
@@ -29,6 +30,17 @@ packages = ["src/your_package"]
 
 [tool.ruff]
 line-length = 100
+# .claude/ holds vendored tooling (skills, hooks), not project source.
+extend-exclude = [".claude/"]
+# Honor excludes even for paths passed explicitly (the pre-commit hook passes staged files).
+force-exclude = true
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM"]
+
+[tool.ty.src]
+exclude = [".claude/"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+addopts = ["-ra", "--strict-markers"]

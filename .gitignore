@@ -1,5 +1,6 @@
 # Virtual environment
 .venv/
+venv/
 
 # Python
 __pycache__/
@@ -10,19 +11,11 @@ dist/
 build/
 *.egg
 
-# IDE
-.idea/
-.vscode/
-*.swp
-*.swo
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Environment variables
-.env
-.env.local
+# Caches
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.ty/
 
 # Coverage
 htmlcov/
@@ -30,11 +23,43 @@ htmlcov/
 .coverage.*
 coverage.xml
 
-# pytest
-.pytest_cache/
+# IDE
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
+*.swo
 
-# Type checker
-.ty/
-.mypy_cache/
+# OS
+.DS_Store
+Thumbs.db
+NUL
+
+# Claude Code — share settings/hooks/skills/agents/commands; keep local state out
+.claude/*
+!.claude/settings.json
+!.claude/hooks/
+!.claude/skills/
+!.claude/agents/
+!.claude/commands/
+.mcp.json
+
+# Environment variables & credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+id_rsa*
+credentials.json
+token.json
+service-account*.json
+service_account*.json
+
+# Logs & scratch
+logs/
+*.log
+.tmp/
 
 # Do NOT ignore uv.lock — it should be committed for reproducible installs
