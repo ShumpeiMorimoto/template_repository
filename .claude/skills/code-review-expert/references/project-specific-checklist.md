@@ -2,8 +2,8 @@
 
 Generic checks live in the other reference files. This file holds rules tied to real incidents:
 
-1. **Carried-over rules (A1–A6)** — lessons paid for in earlier projects. They are not domain-specific; keep them in every project.
-2. **This project's incidents (A7+)** and **runtime checks (R1+)** — append an entry each time a bug escapes review. An entry without a "Why" is a rule nobody can judge edge cases against, so always write one.
+1. **Carried-over rules (A1–A7)** — lessons paid for in earlier projects. They are not domain-specific; keep them in every project.
+2. **This project's incidents (A8+)** and **runtime checks (R1+)** — append an entry each time a bug escapes review. An entry without a "Why" is a rule nobody can judge edge cases against, so always write one.
 
 Cite rule IDs in findings (e.g. "A1: retry added to 3 of 4 fetchers — `src/pkg/fetch_b.py:40` missing") so the rationale is traceable.
 
@@ -90,11 +90,26 @@ grep -rn "<sibling_helper>" src/ --include="*.py" | wc -l
 
 ---
 
-## This project's incidents (A7+)
+### A7. God file — a file past the size limit, or a feature appended to an unrelated file
+
+**Rule**: Flag (a) any file past `max_bytes` / `max_lines` / `doc_max_bytes` in `.claude/file-size.json` that is not allowlisted, (b) an allowlist entry that grew, (c) a diff that adds a feature to a file whose responsibility it is not, instead of a new module, (d) a size fix mixed into a feature diff (the split must be behaviour-preserving and its own step). Check the "where new code goes" table in CLAUDE.md.
+
+**Why**: Agents append to the file they already have open, so files only grow: a prior project reached 300 KB single files and a 259 KB CLAUDE.md. Every later edit re-reads the whole file, and unrelated features start sharing state through it.
+
+**Verdict guidance**: over the limit and not allowlisted, or allowlist entry grew → **P1**; a new feature in an unrelated file while a fitting module exists → **P2**; past the warn line (`warn_ratio`) with the diff still appending → **P2**.
+
+**Detection**:
+```bash
+uv run pytest tests/test_file_size.py -q   # or the project's own size test
+```
+
+---
+
+## This project's incidents (A8+)
 
 <!-- Append one entry per escaped bug. Template:
 
-### A7. <short name of the failure shape>
+### A8. <short name of the failure shape>
 
 **Rule**: <what must always / never happen>
 

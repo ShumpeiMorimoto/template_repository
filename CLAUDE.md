@@ -16,6 +16,14 @@
 - **CI**: `.github/workflows/test-build.yml` (ruff + format + ty + pytest + pip-audit, daily cron)
 - <frameworks / DB / frontend / deploy target>
 
+## Code organization
+
+- One responsibility per file. A new feature goes in a new file/module, never appended to the file you happen to have open (agents append to the open file, so files only grow).
+- Fix the layout at project start: directory structure + a "where new code goes" table + how modules import each other, written here (bootstrap-project step).
+- Before adding to a file past the warn line (`warn_ratio` of the limit), split it first — behaviour-preserving, its own step, never mixed with feature work.
+- Limits live in `.claude/file-size.json` (single source), enforced at edit time by `.claude/hooks/check-file-size.py` and in CI by `tests/test_file_size.py`. Over-limit files are listed in the allowlist ratchet (entries may only shrink). Rule: **A7**.
+- CLAUDE.md ≤ 40 KB. Area details → `<area>/CLAUDE.md` (auto-loaded when that area is read); results → `dev-docs/` as one line.
+
 ## Naming Conventions
 
 - snake_case for files, directories, functions, variables; PascalCase for classes
@@ -47,7 +55,7 @@
   - End-user docs → `docs/`
   - Developer notes / TODO / experiment logs → `dev-docs/`
   - Engineering invariants → `<area>/CLAUDE.md` (must be read before editing that area)
-- **Escaped bugs**: add a rule (A7+) to `.claude/skills/code-review-expert/references/project-specific-checklist.md`.
+- **Escaped bugs**: add a rule (A8+) to `.claude/skills/code-review-expert/references/project-specific-checklist.md`.
 
 ## Environment
 

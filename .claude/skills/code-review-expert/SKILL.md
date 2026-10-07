@@ -159,8 +159,8 @@ Phase 3 must stay within **10 agents total** across all sub-phases. Sub-agents m
 - Each check should be < 2 minutes. If a check would take longer, ask the user before running.
 
 **3i) Project-specific patterns** — load `references/project-specific-checklist.md`
-- Carried-over rules **A1–A6** apply to every project (lessons from earlier incidents). Run them in quick mode too whenever the diff is a cross-cutting fix or adds a family member.
-- Project incidents **A7+** and runtime checks **R1+** are appended to that file as this project accumulates history. Apply each one explicitly.
+- Carried-over rules **A1–A7** apply to every project (lessons from earlier incidents). Run them in quick mode too whenever the diff is a cross-cutting fix or adds a family member.
+- Project incidents **A8+** and runtime checks **R1+** are appended to that file as this project accumulates history. Apply each one explicitly.
 - Cross-reference the "Files that need extra attention" table — if the diff touches one of those files, every linked rule must be considered.
 
 ### Phase 4 — Report
@@ -177,7 +177,7 @@ Output format:
 ## Coverage declaration
 - ✅ Scanned: security, SOLID, code quality, testing quality, observability
 - ✅ Scanned (if applicable to diff): API contract, database & migrations
-- ✅ Scanned (full mode only): hardcoding, dead code, cross-file consistency, file/directory structure, dependency health, documentation consistency, runtime health, project-specific anti-patterns (A1–A6 + A7…) and runtime checks (R1…)
+- ✅ Scanned (full mode only): hardcoding, dead code, cross-file consistency, file/directory structure, dependency health, documentation consistency, runtime health, project-specific anti-patterns (A1–A7 + A8…) and runtime checks (R1…)
 - ⚠️ Sampled but not exhaustive: runtime health checks sample data files and skim recent logs — rare-shape outliers and intermittent failures may slip through
 - ⚠️ NOT scanned (require dedicated tooling): <list explicitly — e.g. "frontend accessibility", "i18n", "ML model correctness", "business logic correctness", "load/stress testing", "production monitoring drift", "long-running pipeline integration tests">
 - ⚠️ Cannot detect by review alone (need real test suite + monitoring):
@@ -275,5 +275,5 @@ I found X issues (P0: _, P1: _, P2: _, P3: _).
 | `dependencies-checklist.md`   | Unused/missing deps, CVEs, lockfile integrity, license/health |
 | `documentation-checklist.md`  | Stale doc references, architecture drift, missing sections, terminology consistency |
 | `runtime-health-checklist.md` | Data freshness, schema drift, writer/reader pairs (incl. staleness), helper saturation, smoke tests, log inspection, cache TTL bugs, scheduled-task LastRun |
-| `project-specific-checklist.md` | Carried-over rules A1–A6 (N-1 siblings, dead report paths, mis-named statistics, unreviewed fix batches, never-executed code, scattered registration) + this project's own incidents (A7+), runtime checks (R1+), and a "files needing extra attention" table |
+| `project-specific-checklist.md` | Carried-over rules A1–A7 (N-1 siblings, dead report paths, mis-named statistics, unreviewed fix batches, never-executed code, scattered registration, god files) + this project's own incidents (A8+), runtime checks (R1+), and a "files needing extra attention" table |
 | `removal-plan.md`             | Template for deletion candidates and follow-up plan |

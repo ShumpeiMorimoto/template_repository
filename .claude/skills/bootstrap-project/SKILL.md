@@ -43,7 +43,8 @@ git mv src/your_package src/<pkg>
 
 - `CLAUDE.md`: 先頭の `<!-- TEMPLATE: ... -->` を削除。Tech Stack / Naming / Domain Knowledge の `<...>` を埋めるか行ごと削除。
 - `README.md`: Features / Usage / Configuration / Roadmap をプロジェクトに合わせるか削除。`AI-assisted development` 節は残す。
-- `.claude/skills/code-review-expert/references/project-specific-checklist.md`: タイトルのプロジェクト名だけ置換。A1–A6 は残す。
+- **コード構成を決める（必須）**: 採用スタックに合わせて `CLAUDE.md` の `## Code organization` 直下に次を書く。(1) 初期ディレクトリ/モジュール構成、(2) 「新しいコードの置き場所」表（機能種別 → ディレクトリ/ファイル）、(3) モジュール機構（このスタックでファイル同士がどう import / 登録し合うか。例: Python は package + `__init__.py`、素の JS は script 読み込み順 / ES modules、など）。さらに `.claude/file-size.json` の `max_bytes` / `max_lines` / `include` / `exclude` / `doc_globs` をスタックに合わせて設定する（既定は Python 向け: 49152 B / 600 行 / doc 40960 B。長行になりがちな言語は行数を 0 にしてバイトだけで測る）。`tests/file_size_allow.json` は `{}` のままにする。
+- `.claude/skills/code-review-expert/references/project-specific-checklist.md`: タイトルのプロジェクト名だけ置換。A1–A7 は残す。
 - `.env.example`: 必要な環境変数名を並べる（値は空のまま）。
 - サンプルコードを最小化する場合: `core.py` / `utils.py` / `examples/example.py` を削除し、`tests/test_core.py` を `import <pkg>` するだけのスモークテストにする。**テストを 0 件にしない**（pytest は 0 件で exit 5 になり CI が落ちる）。
 - 技術スタックを足した場合: 依存は `uv add`、開発ツールは `uv add --dev`。フロントエンド等を足したら `.github/workflows/test-build.yml` にジョブを追加。
@@ -53,7 +54,7 @@ git mv src/your_package src/<pkg>
 
 ```bash
 uv lock && uv sync
-uv run ruff check . && uv run ruff format --check . && uv run ty check . && uv run pytest
+uv run ruff check . && uv run ruff format --check . && uv run ty check . && uv run pytest   # tests/test_file_size.py を含む
 # 残骸ゼロの証明 — 出力が空であること
 grep -rnI 'your_package\|your-package-name\|your-repo-name\|yourusername\|Project Name\|Your Name\|your\.email' \
   --exclude-dir=.venv --exclude-dir=.git --exclude-dir=bootstrap-project .

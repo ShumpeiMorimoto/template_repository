@@ -1,0 +1,19 @@
+{
+  "max_bytes": 49152,
+  "max_lines": 600,
+  "warn_ratio": 0.8,
+  "doc_max_bytes": 40960,
+  "doc_globs": ["CLAUDE.md", "**/CLAUDE.md", "dev-docs/**/*.md", ".claude/**/*.md"],
+  "include": [".py", ".js", ".mjs", ".ts", ".tsx", ".sh", ".md"],
+  "exclude": [
+    "uv.lock",
+    "**/package-lock.json",
+    "**/node_modules/**",
+    ".venv/**",
+    ".git/**",
+    "**/*.min.js",
+    "**/generated/**",
+    "**/data/**"
+  ],
+  "allowlist": "tests/file_size_allow.json"
+}

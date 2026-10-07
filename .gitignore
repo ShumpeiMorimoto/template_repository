@@ -38,6 +38,7 @@ NUL
 # Claude Code — share settings/hooks/skills/agents/commands; keep local state out
 .claude/*
 !.claude/settings.json
+!.claude/file-size.json
 !.claude/hooks/
 !.claude/skills/
 !.claude/agents/
