@@ -1,13 +1,13 @@
 ---
 name: init-project
-description: "テンプレートから作った新規プロジェクトで最初に一度だけ実行する初期化。git / remote の整理、harvest の基準点記録、パッケージ名・プロジェクト名・作者の置換、CLAUDE.md / README / review ルーティング / file-size の穴埋め、テンプレート専用ファイルの削除、ロック再生成、検証までを一括で行い、最後にこのスキル自身を削除する。「このテンプレートで新しいプロジェクトを始めて」「プロジェクトを初期化して」「init して」「プロジェクト名を設定して」と言われたら使う。"
+description: "One-time initialisation, run first in a new project made from this template. Cleans up git / remote, records the harvest baseline, replaces package / project / author placeholders, fills CLAUDE.md / README / review routing / file-size limits, deletes template-only files, regenerates the lock and venv, verifies, and finally deletes this skill. Use when the user says 「このテンプレートで新しいプロジェクトを始めて」「プロジェクトを初期化して」「init して」「プロジェクト名を設定して」."
 ---
 
 # Init Project
 
-このリポジトリはテンプレートから作られた直後の状態。プレースホルダが複数ファイルに散っているので、手で直すと取りこぼす（A6: scattered registration）。この手順を上から順に実行し、最後に残骸ゼロを grep で証明する。テンプレート自身（`template_repository`）の中では実行しない — 手順 0 で止まる。
+This repository was just created from the template. Placeholders are scattered across many files, so fixing them by hand misses some (A6: scattered registration). Run the steps below in order and finish by proving zero residue with grep. Never run this inside the template itself (`template_repository`) — step 0 stops there.
 
-## 0. 前提を確認する
+## 0. Check preconditions
 
 ```bash
 git rev-parse --show-toplevel 2>/dev/null || echo "NO GIT"
@@ -17,97 +17,97 @@ basename "$(pwd)"
 uv --version
 ```
 
-- カレントが `template_repository` そのものなら**中止**して報告する（テンプレートを初期化すると全プロジェクトの出発点が壊れる）。
-- git が無い（フォルダをコピーした）: `git init -b main`。
-- `origin` がテンプレートのリポジトリを指している（clone した）: `git remote remove origin`。新しいリモートの作成・push は外部公開なのでユーザーに指示されたときだけ。
-- `uv` が無ければ README の Install uv を案内して止まる。Python 本体は不要（`uv sync` が `.python-version` の版を自動取得する）。
-- `.venv/` が既にあるなら削除する（フォルダごとコピーした場合、中身はテンプレート用: `pyvenv.cfg` の `prompt = your-package-name`、`Scripts/*.exe` に旧パスが埋め込まれている）。手順 6 の `uv sync` が作り直す。
+- The current directory is `template_repository` itself: **abort** and report (initialising the template breaks the starting point of every future project).
+- No git (the folder was copied): `git init -b main`.
+- `origin` points at the template repository (it was cloned): `git remote remove origin`. Creating a new remote or pushing is outward-facing — only when the user asks.
+- No `uv`: point to "Install uv" in the README and stop. A Python install is not needed (`uv sync` fetches the version in `.python-version`).
+- `.venv/` already exists: delete it (when the folder was copied, it belongs to the template: `prompt = your-package-name` in `pyvenv.cfg`, old paths baked into `Scripts/*.exe`). `uv sync` in step 6 rebuilds it.
 
-## 1. 入力を確定する（不明なものだけ質問する）
+## 1. Settle the inputs (ask only for what is unknown)
 
-| 項目 | 例 | 既定値 |
+| Item | Example | Default |
 |---|---|---|
-| プロジェクト表示名 | `Receipt Scanner` | フォルダ名から生成して確認 |
-| 配布名 (kebab-case) | `receipt-scanner` | 表示名から生成 |
-| パッケージ名 (snake_case) | `receipt_scanner` | 配布名から生成 |
-| 一行説明 | — | — (必須) |
-| コア成果（1文） | 「レシート写真から月別支出 CSV が出る」 | — (必須。CLAUDE.md の Smallest visible core) |
-| 作者名 / email | — | `git config user.name` / `user.email` |
-| GitHub ユーザー名 | — | `gh api user -q .login`（失敗したら質問） |
-| ライセンス | MIT / なし（非公開） | MIT |
-| 追加の技術スタック | FastAPI, React など | なし |
-| UI の有無 | — | なし |
-| 会話言語 | — | 日本語 |
+| Display name | `Receipt Scanner` | derived from the folder name, then confirmed |
+| Distribution name (kebab-case) | `receipt-scanner` | derived from the display name |
+| Package name (snake_case) | `receipt_scanner` | derived from the distribution name |
+| One-line description | — | — (required) |
+| Core outcome (one sentence) | "a receipt photo yields a monthly expense CSV" | — (required; CLAUDE.md "Smallest visible core") |
+| Author name / email | — | `git config user.name` / `user.email` |
+| GitHub user | — | `gh api user -q .login` (ask if it fails) |
+| License | MIT / none (private) | MIT |
+| Extra stack | FastAPI, React, … | none |
+| Has a UI | — | no |
+| Conversation language | — | Japanese |
 
-## 2. harvest の基準点を記録する
+## 2. Record the harvest baseline
 
-`harvest`（完了時にテンプレートへ資産を戻す）は `.claude/harvest.json` の `last_feedback_commit` 以降の差分を見る。テンプレートの履歴を引き継いでいると、初回 harvest がテンプレート自身の中身を「このプロジェクトの成果」として再提案してしまう。
+`harvest` (feeds assets back to the template at wind-down) diffs from `last_feedback_commit` in `.claude/harvest.json`. If the template's history came along, the first harvest would re-propose the template's own content as this project's work.
 
-- 履歴を引き継いでいる（`git log` にテンプレートのコミットがある）: その時点の `HEAD` を記録する。
-- 履歴が無い / 新規 `git init`: 記録不要（初回 = 全履歴で正しい）。
-- テンプレートが `../template_repository` 以外にあるなら `template_path` も書く。
+- History inherited (`git log` shows template commits): record the current `HEAD`.
+- No inherited history (GitHub "Use this template", or a fresh `git init`): nothing to record (first run = whole history is correct).
+- Template not at `../template_repository`: also write `template_path`.
 
 ```json
-{ "last_feedback_commit": "<HEAD sha>", "last_feedback_date": "<今日>", "template_path": "<省略可>" }
+{ "last_feedback_commit": "<HEAD sha>", "last_feedback_date": "<today>", "template_path": "<optional>" }
 ```
 
-## 3. 置換する
+## 3. Replace placeholders
 
 ```bash
 git mv src/your_package src/<pkg>
 ```
 
-次の置換を **grep で見つかった全ファイル** に適用する（`.venv/`, `.git/`, `uv.lock` は除外。uv.lock は手順 6 で再生成）:
+Apply each replacement to **every file grep finds** (exclude `.venv/`, `.git/`, `uv.lock`; the lock is regenerated in step 6):
 
-| 置換前 | 置換後 |
+| Before | After |
 |---|---|
 | `your_package` | `<pkg>` |
 | `your-package-name` | `<dist>` |
 | `your-repo-name` | `<dist>` |
 | `yourusername` | `<github user>` |
-| `Project Name` / `<Project Name>` | `<表示名>` |
-| `A brief description of your project` / `A brief, compelling description ...` | `<一行説明>` |
-| `Your Name` / `your.email@example.com` | 作者名 / email |
-| `Copyright (c) 2026` | `Copyright (c) <今年>` |
+| `Project Name` / `<Project Name>` | `<display name>` |
+| `A brief description of your project` / `A brief, compelling description ...` | `<one-line description>` |
+| `Your Name` / `your.email@example.com` | author name / email |
+| `Copyright (c) 2026` | `Copyright (c) <this year>` |
 
-ライセンス「なし」なら `LICENSE` を削除し、README のバッジと License 節、`pyproject.toml` の `license` を消す。
+License "none": delete `LICENSE`, the README badge and License section, and `license` in `pyproject.toml`.
 
-## 4. テンプレート専用ファイルを消す
+## 4. Delete template-only files
 
-- `dev-docs/HARVEST_LOG.md`（テンプレートが受け取った資産の記録。harvest はテンプレート側に書くので、プロジェクトには不要）と、`dev-docs/README.md` のその行。
-- README の `Contributing` 節（個人プロジェクト。外部貢献を受けるなら残す）。
-- UI が無い: `.claude/skills/ui-review/` を削除し、`review` のルーティング表から `ui-review` の行（コメント例を含む）と README の該当行を消す。
-- 会話言語が日本語以外: `.claude/hooks/require-japanese.py`、`.claude/settings.json` の `Stop` フックと `"language"` を削除し、`CLAUDE.md` の Language 行を直す。
-- **残すスキル**: `harvest`、`review`（+ `code-review-expert`）は必ず残す。
+- `dev-docs/HARVEST_LOG.md` (the template's record of assets it received; harvest writes on the template side, so a project never needs it) and its line in `dev-docs/README.md`.
+- README `Contributing` section (personal project; keep it if outside contributions are expected).
+- No UI: delete `.claude/skills/ui-review/`, plus the `ui-review` rows (including the commented example) in the `review` routing table and in the README.
+- Conversation language other than Japanese: delete `.claude/hooks/require-japanese.py`, the `Stop` hook and `"language"` in `.claude/settings.json`, and fix the Language line in `CLAUDE.md`.
+- **Skills that always stay**: `harvest`, `review` (+ `code-review-expert`).
 
-## 5. 中身を埋める
+## 5. Fill in the content
 
-- `CLAUDE.md`: 先頭の `<!-- TEMPLATE: ... -->` を削除。Tech Stack / Naming / Domain Knowledge の `<...>` を埋めるか行ごと削除。
-- **コード構成を決める（必須）**: 採用スタックに合わせて `CLAUDE.md` の `## Code organization` 直下に次を書く。(1) 初期ディレクトリ/モジュール構成、(2) 「新しいコードの置き場所」表（機能種別 → ディレクトリ/ファイル）、(3) モジュール機構（このスタックでファイル同士がどう import / 登録し合うか。例: Python は package + `__init__.py`、素の JS は script 読み込み順 / ES modules、など）。
-- `.claude/file-size.json` の `max_bytes` / `max_lines` / `include` / `exclude` / `doc_globs` をスタックに合わせる（既定は Python 向け: 49152 B / 600 行 / doc 40960 B。長行になりがちな言語は行数を 0 にしてバイトだけで測る）。`tests/file_size_allow.json` は `{}` のまま。
-- `README.md`: Features / Usage / Roadmap をプロジェクトに合わせるか削除。`AI-assisted development` 節は残し、表の `init-project` 行を消す。`## Project Status` を `active — <現状>` で埋める。
-- `dev-docs/PROJECT_TODO.md` を作る（形式は `dev-docs/README.md`）。「進行中」の先頭にコア成果の最小版を置く。
-- `.claude/skills/review/references/project-rules.md`: タイトルのプロジェクト名だけ置換。A1–A18 は残す（事故ルールは A19+ に追記）。
-- **`review` のルーティング表を埋める**: `.claude/skills/review/SKILL.md` の表を採用スタックに合わせる（`src/**` などのパス → `code-review-expert`、独自の不変条件を持つ領域は専門スキル行を追加）。`<area>/**` の例示行は使わなければ削除。UI があるなら `ui-review` のコメント行を有効化する。
-- `.env.example`: 必要な環境変数名を並べる（値は空のまま）。
-- `tests/test_package_imports.py`（`import <pkg>` だけのスモークテスト）は実テストが入るまで残す。**テストを 0 件にしない**（pytest は 0 件で exit 5 になり CI が落ちる）。
-- 技術スタックを足した場合: 依存は `uv add`、開発ツールは `uv add --dev`。フロントエンド等を足したら `.github/workflows/test-build.yml` にジョブを追加。サーバープロセス / ビルド無しの JS / 静的ファイル配信があるなら `references/stack-kits.md` の該当キットを展開する（このスキルと一緒に消えるので、使うものは今コピーする）。
+- `CLAUDE.md`: delete the leading `<!-- TEMPLATE: ... -->`. Fill the `<...>` in Tech Stack / Naming / Domain Knowledge, or delete those lines.
+- **Fix the code layout (required)**: for the chosen stack, write under `## Code organization` in `CLAUDE.md`: (1) the initial directory / module layout, (2) a "where new code goes" table (kind of feature → directory / file), (3) the module mechanism (how files import / register each other in this stack — e.g. Python package + `__init__.py`, plain-JS script order / ES modules).
+- `.claude/file-size.json`: set `max_bytes` / `max_lines` / `include` / `exclude` / `doc_globs` for the stack (defaults are for Python: 49152 B / 600 lines / docs 40960 B; for languages prone to long lines set lines to 0 and measure bytes only). Leave `tests/file_size_allow.json` as `{}`.
+- `README.md`: adapt or delete Features / Usage / Roadmap. Keep the `AI-assisted development` section but delete its `init-project` row. Fill `## Project Status` with `active — <current state>`.
+- Create `dev-docs/PROJECT_TODO.md` (format in `dev-docs/README.md`) with the thinnest version of the core outcome at the top of "in progress".
+- `.claude/skills/review/references/project-rules.md`: replace only the project name in the title. Keep A1–A18 (escaped-bug rules go to A19+).
+- **Fill the `review` routing table**: adapt the table in `.claude/skills/review/SKILL.md` to the stack (paths such as `src/**` → `code-review-expert`; add a specialist row for any area with its own invariants). Delete the `<area>/**` example row if unused. With a UI, enable the commented `ui-review` row.
+- `.env.example`: list the needed env var names (values empty).
+- Keep `tests/test_package_imports.py` (a smoke test that only does `import <pkg>`) until real tests exist. **Never leave zero tests** (pytest exits 5 on zero tests and CI fails).
+- Extra stack: dependencies via `uv add`, dev tools via `uv add --dev`. A frontend or similar gets a job in `.github/workflows/test-build.yml`. For a server process / build-less JS / static file serving, expand the matching kit from `references/stack-kits.md` (it disappears with this skill, so copy what you use now).
 
-## 6. 検証する
+## 6. Verify
 
 ```bash
 uv lock && uv sync
-uv run ruff check . && uv run ruff format --check . && uv run ty check . && uv run pytest   # file-size / skill-reference ガードを含む
-# 残骸ゼロの証明 — 出力が空であること
+uv run ruff check . && uv run ruff format --check . && uv run ty check . && uv run pytest   # includes the file-size / skill-reference guards
+# proof of zero residue — must print nothing
 grep -rnI 'your_package\|your-package-name\|your-repo-name\|yourusername\|Project Name\|Your Name\|your\.email\|HARVEST_LOG' \
   --exclude-dir=.venv --exclude-dir=.git --exclude-dir=init-project .
 grep -nE 'YYYY-MM|init-project' README.md CLAUDE.md
 ```
 
-grep がヒットしたら直して再実行。全て緑になるまで次に進まない。
+If grep hits, fix and rerun. Do not move on until everything is green.
 
-## 7. 片付ける
+## 7. Clean up
 
-- このスキルのディレクトリ `.claude/skills/init-project/` を削除し、`tests/test_skill_references.py` の `SKIPPED_SKILLS` から `init-project` を外す（初期化は一度きり）。外した後にもう一度 `uv run pytest`。
-- コミットはユーザーに指示されたときだけ。
-- 最後に、変更したファイル一覧、手順 0 で行った git / remote の操作、埋めずに残した `<...>` 箇所をユーザーに報告する。
+- Delete this skill's directory `.claude/skills/init-project/` and remove `init-project` from `SKIPPED_SKILLS` in `tests/test_skill_references.py` (initialisation happens once). Run `uv run pytest` again afterwards.
+- Commit only when the user asks.
+- Finally report to the user: the changed files, the git / remote actions taken in step 0, and every `<...>` left unfilled.
