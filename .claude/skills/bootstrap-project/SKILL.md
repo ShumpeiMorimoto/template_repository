@@ -47,7 +47,7 @@ git mv src/your_package src/<pkg>
 - `.claude/skills/review/references/project-rules.md`: タイトルのプロジェクト名だけ置換。A1–A18 は残す（事故ルールは A19+ に追記）。
 - **`review` のルーティング表を埋める**: `.claude/skills/review/SKILL.md` の表を採用スタックに合わせる（`src/**` などのパス → `code-review-expert`、独自の不変条件を持つ領域は専門スキル行を追加）。`<area>/**` の例示行は使わなければ削除。UI があるなら `ui-review` のコメント行を有効化する。
 - `.env.example`: 必要な環境変数名を並べる（値は空のまま）。
-- サンプルコードを最小化する場合: `core.py` / `utils.py` / `examples/example.py` を削除し、`tests/test_core.py` を `import <pkg>` するだけのスモークテストにする。**テストを 0 件にしない**（pytest は 0 件で exit 5 になり CI が落ちる）。
+- `tests/test_package_imports.py`（`import <pkg>` だけのスモークテスト）は実テストが入るまで残す。**テストを 0 件にしない**（pytest は 0 件で exit 5 になり CI が落ちる）。
 - 技術スタックを足した場合: 依存は `uv add`、開発ツールは `uv add --dev`。フロントエンド等を足したら `.github/workflows/test-build.yml` にジョブを追加。サーバープロセス / ビルド無しの JS / 静的ファイル配信があるなら `references/stack-kits.md` の該当キットを展開する（このスキルと一緒に消えるので、使うものは今コピーする）。
 - 会話言語が日本語以外のプロジェクト: `.claude/hooks/require-japanese.py` と `.claude/settings.json` の `Stop` フック・`"language"` を削除し、`CLAUDE.md` の Language 行を直す。
 - **残すスキル**: `harvest`（完了時にテンプレートへ資産を戻す）と `review`（+ `code-review-expert`）は必ず残す。`ui-review` は UI が無いプロジェクトでは `.claude/skills/ui-review/` を削除し、`review` のルーティング表からも `ui-review` の行（コメント例を含む）を消す。

@@ -52,65 +52,20 @@ uv sync
 
 ## Quick Start
 
-```python
-from your_package.core import YourMainClass
-
-# Initialize
-instance = YourMainClass(param1="hello")
-
-# Basic usage
-result = instance.do_something()
-print(result)
+```bash
+uv run python -c "import your_package; print(your_package.__version__)"
 ```
 
 ## Usage
 
-### Basic Example
-
-```python
-from your_package.core import YourMainClass
-from your_package.utils import helper_function
-
-# Example 1: Using the main class
-obj = YourMainClass(param1="value", param2=42)
-result = obj.do_something()
-
-# Example 2: Using utility functions
-cleaned = helper_function("  some text  ")
-```
-
-### Advanced Usage
-
-```python
-from your_package.core import YourMainClass
-
-# Advanced configuration
-obj = YourMainClass(param1="advanced", param2=100)
-result = obj.do_something()
-```
+<How to run the project's entry point.>
 
 ## Configuration
-
-Configuration can be done via environment variables or a config file:
-
-### Environment Variables
 
 Copy `.env.example` to `.env` and fill in the values (`.env` is git-ignored):
 
 ```bash
 cp .env.example .env
-```
-
-### Configuration File
-
-Create a `config.yaml` file:
-
-```yaml
-api_key: "your-api-key"
-setting: "value"
-database:
-  host: "localhost"
-  port: 5432
 ```
 
 ## Development
@@ -159,7 +114,7 @@ uv run pytest
 uv run pytest --cov=your_package
 
 # Run specific test file
-uv run pytest tests/test_core.py
+uv run pytest tests/test_package_imports.py
 
 # Run with verbose output
 uv run pytest -v
@@ -201,17 +156,13 @@ your-project/
 │       └── test-build.yml
 ├── src/
 │   └── your_package/
-│       ├── __init__.py
-│       ├── core.py
-│       └── utils.py
+│       └── __init__.py
 ├── tests/
 │   ├── __init__.py
 │   ├── conftest.py
-│   └── test_core.py
+│   └── test_*.py
 ├── docs/               # end-user documentation
 ├── dev-docs/           # developer notes, TODO, experiment logs
-├── examples/
-│   └── example.py
 ├── CLAUDE.md
 ├── .env.example
 ├── pyproject.toml
