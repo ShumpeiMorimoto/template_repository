@@ -1,6 +1,6 @@
 # Stack kits
 
-Optional pieces for stacks the template core does not assume. Copy what the project needs during bootstrap; the rest disappears with the bootstrap skill. Each kit is a skeleton: replace every `<...>` and run it once before relying on it.
+Optional pieces for stacks the template core does not assume. Copy what the project needs during init; the rest disappears with the `init-project` skill. Each kit is a skeleton: replace every `<...>` and run it once before relying on it.
 
 ## 1. Server process — smoke workflow
 

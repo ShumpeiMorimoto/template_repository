@@ -19,7 +19,7 @@
 ## Code organization
 
 - One responsibility per file. A new feature goes in a new file/module, never appended to the file you happen to have open (agents append to the open file, so files only grow).
-- Fix the layout at project start: directory structure + a "where new code goes" table + how modules import each other, written here (bootstrap-project step).
+- Fix the layout at project start: directory structure + a "where new code goes" table + how modules import each other, written here (`init-project` skill).
 - Before adding to a file past the warn line (`warn_ratio` of the limit), split it first — behaviour-preserving, its own step, never mixed with feature work.
 - Limits live in `.claude/file-size.json` (single source), enforced at edit time by `.claude/hooks/check-file-size.py` and in CI by `tests/test_file_size.py`. Over-limit files are listed in the allowlist ratchet (entries may only shrink). Rule: **A7**.
 - CLAUDE.md ≤ 40 KB. Area details → `<area>/CLAUDE.md` (auto-loaded when that area is read); results → `dev-docs/` as one line.

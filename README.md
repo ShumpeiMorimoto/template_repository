@@ -135,7 +135,7 @@ This repository ships a [Claude Code](https://docs.claude.com/en/docs/claude-cod
 | `.claude/hooks/check-lint.sh` | Blocks `git commit` when staged Python fails ruff / ruff format / ty |
 | `.claude/hooks/require-*-model.py` | Requires an explicit `model` on subagents and workflows, plus the standard rules footer on subagent prompts |
 | `.claude/hooks/require-japanese.py` | Blocks a final reply that is mostly English (conversation language is Japanese) |
-| `.claude/skills/bootstrap-project/` | One-time: turn this template into a named project |
+| `.claude/skills/init-project/` | One-time: run first in a new project made from this template (deletes itself) |
 | `.claude/skills/review/` | Review entry point: routes a diff to specialist skills, merges and verifies one report; holds the repo rules (`references/project-rules.md`) |
 | `.claude/skills/code-review-expert/` | Generic structured quick/full code review with checklists |
 | `.claude/skills/harvest/` | Feeds reusable assets of a finished project back into the template |

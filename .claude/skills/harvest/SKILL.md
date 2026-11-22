@@ -45,7 +45,7 @@ source's `HEAD` in `dev-docs/HARVEST_LOG.md` as the baseline for the next pull. 
 | Class | Test | Destination |
 |---|---|---|
 | **CORE** | true for any project; needs no dependency the template lacks | template proper (skill, hook, test, rule, config) |
-| **STACK-KIT** | valuable only with a certain stack (frontend, DB, scheduler, …) | an OPTIONAL skill or `references/` file that the bootstrap skill deletes when the stack is absent — never template core |
+| **STACK-KIT** | valuable only with a certain stack (frontend, DB, scheduler, …) | an OPTIONAL skill or `references/` file that the `init-project` skill deletes when the stack is absent — never template core |
 | **PROJECT-ONLY** | names a domain concept, an external service, data, or a past incident's specifics | rejected — log one line why |
 
 A lesson is CORE only as a **mechanism** ("a request waits on refreshing an expired cache"), never as the incident.
@@ -56,7 +56,7 @@ Do not port application code "because it is nice" — port the pattern as a rule
 
 - Strip names, dates, counts and narrative; keep Rule / one-line Why (mechanism) / Detect / Verdict.
 - Replace paths and identifiers with the template's placeholders (`<pkg>`, `src/<pkg>`, `<...>`). If a NEW
-  placeholder is introduced, add it to the bootstrap skill's replace table AND its residue grep in the same change.
+  placeholder is introduced, add it to the `init-project` skill's replace table AND its residue grep in the same change.
 - Follow the template's own numbering and structure (its rule IDs, its routing table, its file-size limits in
   `<template>/.claude/file-size.json`, CLAUDE.md size cap). Do not import this project's numbering.
 - Never copy secrets, `.env*`, data files, logs, absolute user paths, or anything under a `data/` directory.
@@ -66,8 +66,8 @@ Do not port application code "because it is nice" — port the pattern as a rule
 ## 4. Apply to the template working tree
 
 - Edit the template in place; keep each asset in the location the template's "where things go" rules imply.
-- Removals count: delete what this project proved useless, and remove every mention (bootstrap skill, README, CLAUDE.md).
-- Keep the template bootable: the bootstrap skill must still describe every file it touches, and must NOT delete this
+- Removals count: delete what this project proved useless, and remove every mention (`init-project` skill, README, CLAUDE.md).
+- Keep the template bootable: the `init-project` skill must still describe every file it touches, and must NOT delete this
   skill (`harvest` ships with every new project).
 - Copy this skill itself into the template if its text changed here.
 
@@ -82,7 +82,7 @@ git diff | grep -inE "<project-terms joined with |>"
 git status --short | grep -E "\.env|/data/|\.log$"
 ```
 
-Also confirm: bootstrap residue grep list still matches the placeholders present; every path named in a template skill
+Also confirm: `init-project` residue grep list still matches the placeholders present; every path named in a template skill
 exists (the skill-reference guard test, if the template has one).
 
 ## 6. Record

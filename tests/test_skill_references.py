@@ -14,8 +14,8 @@ HISTORY_RE = re.compile(
     r"deleted|removed|retired|historical|no longer|formerly|削除|撤去|廃止|旧", re.I
 )
 ROUTE_RE = re.compile(r"^\|[^|]+\|\s*`([a-z0-9-]+)`", re.M)
-# bootstrap-project describes files it creates or deletes, so its paths are not stable references.
-SKIPPED_SKILLS = {"bootstrap-project"}
+# init-project describes files it creates or deletes, so its paths are not stable references.
+SKIPPED_SKILLS = {"init-project"}
 # Created by harvest on its first run.
 RUNTIME_FILES = {".claude/harvest.json"}
 
