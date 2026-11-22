@@ -1,9 +1,9 @@
-# Project-Specific Checklist — <Project Name>
+# Repository Review Rules — <Project Name>
 
-Generic checks live in the other reference files. This file holds rules tied to real incidents:
+Loaded by the `review` skill and passed to every specialist (generic checks live in `code-review-expert`'s reference files). This file holds rules tied to real incidents:
 
-1. **Carried-over rules (A1–A7)** — lessons paid for in earlier projects. They are not domain-specific; keep them in every project.
-2. **This project's incidents (A8+)** and **runtime checks (R1+)** — append an entry each time a bug escapes review. An entry without a "Why" is a rule nobody can judge edge cases against, so always write one.
+1. **Carried-over rules (A1–A11)** — lessons paid for in earlier projects. They are not domain-specific; keep them in every project.
+2. **This project's incidents (A12+)** and **runtime checks (R1+)** — append an entry each time a bug escapes review. An entry without a "Why" is a rule nobody can judge edge cases against, so always write one.
 
 Cite rule IDs in findings (e.g. "A1: retry added to 3 of 4 fetchers — `src/pkg/fetch_b.py:40` missing") so the rationale is traceable.
 
@@ -103,13 +103,68 @@ grep -rn "<sibling_helper>" src/ --include="*.py" | wc -l
 uv run pytest tests/test_file_size.py -q   # or the project's own size test
 ```
 
+### A8. Request path blocks on refreshing an expired cache
+
+**Rule**: A cache read on a request path serves the stale value and refreshes in the background (stale-while-revalidate). Only a never-fetched key may block, and cold fills run in parallel, not sequentially.
+
+**Why**: Entries filled together expire together, so one request per TTL waits for the whole sequential refresh and exceeds the client timeout.
+
+**Verdict guidance**: a synchronous fetch after a TTL check inside a request handler → **P1**; sequential cold fill of N keys → **P2**.
+
+**Detection**:
+```bash
+# TTL check followed by a synchronous fetch in a handler
+grep -rn -B2 -A4 "_TTL\|ttl" src/ --include="*.py" | grep -n "fetch\|requests\.\|httpx\."
+```
+Compare the client timeout against the worst-case cold refresh (N keys x per-key latency).
+
+### A9. UI correct in only one theme, one of N copies, or reviewed from source only
+
+**Rule** (applies when the project has a UI): colours come from role tokens, never hand-written per-theme classes; a second implementation of an existing UI job (search box, labelled-number tile, modal) is a finding; a UI diff is not reviewed until it has been rendered and looked at in every theme and at phone + desktop width. The optional `ui-review` skill does this.
+
+**Why**: A hard-coded colour reads fine in the theme it was written in and is unreadable in the other; a duplicated component drifts from its original. Neither is visible in the diff text.
+
+**Verdict guidance**: hand-written per-theme or hex colours, or an unrendered UI diff → **P1**; a duplicate of an existing component → **P2**.
+
+**Detection**:
+```bash
+grep -rnE "#[0-9a-fA-F]{3,8}|bg-(slate|gray|zinc)-[0-9]+" <ui_dir>/ | grep -v tokens
+```
+
+### A10. Dead code kept "just in case"
+
+**Rule**: Delete retired code (archive directories, scripts that can no longer be imported, leftovers of retired pipelines). Version control is the archive.
+
+**Why**: An archive directory rots (imports of deleted modules) while still looking alive, and live code starts importing from it.
+
+**Verdict guidance**: non-archive code importing from an archive directory → **P1**; unimportable script or archive directory kept → **P2**.
+
+**Detection**:
+```bash
+grep -rn "archive/\|from .*archive" src/ scripts/ --include="*.py"
+uv run python -m compileall -q scripts/ && echo ok   # plus a smoke test that imports every script, or an AST check for imports of non-existent modules
+```
+
+### A11. Review instruments drift
+
+**Rule**: Skills and rule files must not name files, functions or commands that no longer exist; guard that with a test and the `review` skill's maintenance step.
+
+**Why**: A skill that points at a removed design keeps teaching it, and reviewers follow it.
+
+**Verdict guidance**: a skill naming a missing path or skill → **P2**; the guard test missing or skipped → **P2**.
+
+**Detection**:
+```bash
+uv run pytest tests/test_skill_references.py -q
+```
+
 ---
 
-## This project's incidents (A8+)
+## This project's incidents (A12+)
 
 <!-- Append one entry per escaped bug. Template:
 
-### A8. <short name of the failure shape>
+### A12. <short name of the failure shape>
 
 **Rule**: <what must always / never happen>
 
@@ -152,6 +207,6 @@ _(none yet)_
 
 ## How to use this file in a review
 
-1. Quick mode: apply A1 and A6 whenever the diff is a cross-cutting fix or adds a family member; A5 whenever it adds a new job/writer.
-2. Full mode (Phase 3i): apply every A-rule, run every R-check, and flag stale results as P1.
+1. Quick mode: apply A1 and A6 whenever the diff is a cross-cutting fix or adds a family member; A5 whenever it adds a new job/writer; A8 for any cache on a request path; A9 for UI diffs; A10 when files are deleted or scripts added.
+2. Full mode (code-review-expert phase 3i): apply every A-rule, run every R-check, and flag stale results as P1.
 3. If the diff touches a file in the table above, every linked rule must be considered.

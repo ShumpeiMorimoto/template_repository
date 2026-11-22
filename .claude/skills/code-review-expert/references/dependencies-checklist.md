@@ -113,7 +113,7 @@ For critical deps:
 
 ### P1 - Unused deps (size impact)
 - `torch` in pyproject.toml — no imports in source, ~2GB venv savings
-- `playwright` — only used in deleted sbi_sync code
+- `playwright` — only used in deleted scraper code
 
 ### P1 - Missing lockfile
 - No `package-lock.json` committed

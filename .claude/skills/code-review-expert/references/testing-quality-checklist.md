@@ -52,7 +52,7 @@ Areas typically missed even at high line-coverage %:
 - **Error paths**: the `except` branches
 - **Edge cases**: empty lists, zero values, negative numbers, very large inputs
 - **Concurrent scenarios**: two requests racing
-- **Malformed input**: what the frontend/API never sends but an attacker might
+- **Malformed input**: what the client/API never sends but an attacker might
 - **Timezone edge cases**: DST transitions, leap seconds, epoch boundaries
 - **Numeric precision**: floating point drift, decimal rounding
 
@@ -104,15 +104,15 @@ Areas typically missed even at high line-coverage %:
 
 ### P1 - Critical paths untested
 - `engine/pnl.py` — modified in diff, no corresponding test change
-- `routers/auth.py:45` — new endpoint added, no auth test
+- `routers/sync.py:45` — new endpoint added, no auth test
 
 ### P2 - Weak tests
 - `tests/test_portfolio.py:23` — mocks the calculate_portfolio function it's testing
-- `tests/test_ml.py:87` — only assertion is `assert result is not None`
+- `tests/test_pnl.py:87` — only assertion is `assert result is not None`
 
 ### P2 - Flaky patterns
 - `tests/test_sync.py:12` — uses `time.sleep(5)`, should use explicit wait
 
 ### P3 - Stale test infra
-- `tests/test_legacy.py` — all tests @skip for 6 months, remove or fix
+- `test_legacy.py` — all tests @skip for 6 months, remove or fix
 ```

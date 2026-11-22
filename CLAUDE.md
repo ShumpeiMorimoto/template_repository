@@ -43,7 +43,11 @@
 - Minimize new dependencies. Prefer the standard library.
 - **Git**: Do not commit unless explicitly asked. Do not ask "commit?" after completing work. Never include commit steps in task lists.
 - **Verification**: A change is done when it has been executed, not when it reads correctly — run the tests AND the real entry point, and confirm the running process picked up the new code.
-- **Cross-cutting edits**: enumerate sibling call sites with `grep` BEFORE writing, never from memory ("applied to N-1 of N siblings" is the costliest bug shape). Prove each regression test fails on the pre-fix code. Before any statistic drives a decision, say what ONE ROW of it is. Run a new job/writer once against real data in a scratch location BEFORE reviewing it. If adding one member of a family (handler / job / event type / env var / DB enum) means editing more than one file, that scattering is itself the finding. Details: **A1-A6** in `.claude/skills/code-review-expert/references/project-specific-checklist.md` (that skill only loads during a review, so this line is the entry point while implementing).
+- **Cross-cutting edits**: enumerate sibling call sites with `grep` BEFORE writing, never from memory ("applied to N-1 of N siblings" is the costliest bug shape). Prove each regression test fails on the pre-fix code. Before any statistic drives a decision, say what ONE ROW of it is. Run a new job/writer once against real data in a scratch location BEFORE reviewing it. If adding one member of a family (handler / job / event type / env var / DB enum) means editing more than one file, that scattering is itself the finding. Details: **A1–A11** in `.claude/skills/review/references/project-rules.md` (that file only loads during a review, so this line is the entry point while implementing). Reviews start at `/review`, which routes to the specialist skills.
+- **Dead code is deleted, not archived** — git history is the archive.
+- **Tests**: a test file is named for the behaviour it pins, never for a date or incident ID.
+- **Scratch**: ad-hoc dumps and scratch output go in `.scratch/` (git-ignored), never the repo root.
+- **Retention**: anything that writes dated files (logs, dumps, snapshots) ships with a retention rule from day one.
 - **Personal project**: Single developer. No PR reviews required, simple branch strategy. Optimize for speed over process.
 - **Token economy — delegate to subagents**: Main model = design, judgment, audit, review. Implementation/tests/refactors → `model: sonnet` subagents. File searches / mechanical bulk edits → `model: haiku`. Deliberate high-difficulty work → `model: opus`. Investigations → Explore agent; main receives conclusions only. Enforced by `.claude/hooks/require-agent-model.py` (explicit `model` + `[AGENT-RULES v1]` footer on every Agent call).
 
@@ -55,7 +59,7 @@
   - End-user docs → `docs/`
   - Developer notes / TODO / experiment logs → `dev-docs/`
   - Engineering invariants → `<area>/CLAUDE.md` (must be read before editing that area)
-- **Escaped bugs**: add a rule (A8+) to `.claude/skills/code-review-expert/references/project-specific-checklist.md`.
+- **Escaped bugs**: add a rule (A12+) to `.claude/skills/review/references/project-rules.md`.
 
 ## Environment
 

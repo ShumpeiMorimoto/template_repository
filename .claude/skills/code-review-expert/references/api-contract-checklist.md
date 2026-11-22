@@ -69,7 +69,7 @@ If the project has OpenAPI spec or similar schema:
 ### 9. Client-server contract drift (monorepo)
 If frontend and backend are in the same repo:
 - Backend adds a field, frontend types don't include it
-- Backend removes a field, frontend still references it
+- Backend removes a field, a client still references it
 - Enum values added in backend not reflected in frontend enum
 - Request body shape changed on one side only
 
@@ -104,11 +104,11 @@ If frontend and backend are in the same repo:
 ## API contract findings
 
 ### P0 - Breaking changes
-- `routers/trades.py:45` — removed `stockName` from response, frontend still references it
-- `routers/predict.py:20` — renamed `confidence` to `conviction`, no version bump
+- `routers/orders.py:45` — removed `itemName` from response, a client still references it
+- `routers/portfolio.py:20` — renamed `confidence` to `conviction`, no version bump
 
 ### P1 - Auth inconsistency
-- `routers/intraday.py:17` — new endpoint, no auth guard; peers use `Depends(require_api_key)`
+- `routers/example.py:17` — new endpoint, no auth guard; peers use `Depends(require_api_key)`
 
 ### P1 - Schema drift
 - OpenAPI spec `openapi.yaml` not updated for new `/intraday/backtest` endpoint

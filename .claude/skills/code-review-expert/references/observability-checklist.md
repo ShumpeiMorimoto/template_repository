@@ -25,14 +25,14 @@ except Exception:
 **Good**:
 ```python
 except Exception as e:
-    logger.error(f"Failed to process trade {trade_id} for {ticker}: {e}", exc_info=True)
+    logger.error(f"Failed to process order {order_id} for {item}: {e}", exc_info=True)
 ```
 
 **Check for**:
 - `exc_info=True` or equivalent stack trace on exception logs
 - Correlation IDs / request IDs in request-scoped logs
 - User/tenant IDs for multi-tenant systems
-- Operation identifiers (trade_id, order_id, run_date)
+- Operation identifiers (order_id, run_id, run_date)
 
 ### 3. Structured vs unstructured logs
 - If the project uses a structured logger (JSON), check for `f"{}" "string formatting"` that bypasses the structure
@@ -54,7 +54,7 @@ Key metrics to check are emitted:
 - **Latency**: time from request to response for external calls
 - **Error rate**: counted by endpoint/operation
 - **Throughput**: requests per second
-- **Business metrics**: orders placed, trades synced, predictions made
+- **Business metrics**: orders placed, records synced, jobs completed
 - **Resource metrics**: cache hit rate, queue depth, connection pool usage
 
 If the project has metrics infrastructure (Prometheus, StatsD, CloudWatch), check that new endpoints/features emit relevant metrics.
@@ -72,7 +72,7 @@ If the project has metrics infrastructure (Prometheus, StatsD, CloudWatch), chec
 ### 8. Debuggability of failures
 Questions to ask for each new feature:
 - "If this breaks in production at 3am, what do I need to debug it?"
-- "Does the log tell me *which* user/trade/ticker caused the error?"
+- "Does the log tell me *which* user/order/item caused the error?"
 - "Can I correlate a user complaint to a log line?"
 - "If this silently produces wrong output, would I ever notice?"
 
@@ -108,12 +108,12 @@ Questions to ask for each new feature:
 ## Observability findings
 
 ### P1 - Silent failures
-- `engine/sbi_sync.py:87` — `except: pass` swallows all errors, no log
-- `routers/trades.py:102` — async task spawned without error handler
+- `engine/external_sync.py:87` — `except: pass` swallows all errors, no log
+- `routers/orders.py:102` — async task spawned without error handler
 
 ### P2 - Missing context
-- `routers/predict.py:45` — logs "prediction failed" without ticker or error detail
-- `ml/train_lgbm.py:312` — exception caught, only type logged, no traceback
+- `routers/portfolio.py:45` — logs "summary failed" without item id or error detail
+- `scanners/foo_scanner.py:312` — exception caught, only type logged, no traceback
 
 ### P2 - Log level misuse
 - `routers/notes.py:34` — `logger.error` for "note not found" (expected case, should be info or warn)

@@ -44,7 +44,7 @@ Architecture violations that compile but break layering:
 
 - `engine/` importing from `routers/` (engine should not depend on transport layer)
 - `lib/` importing from `components/` (utilities shouldn't depend on UI)
-- `backend/` importing from `frontend/` or vice versa
+- Server code importing from client code, or vice versa
 - Cross-feature imports when features should be isolated
 
 **Detection**: For each layer, grep its imports — they should only point to same-layer or lower-layer modules.
@@ -77,6 +77,34 @@ Mixed patterns = review finding.
 - Internal helpers that are accidentally exposed (no `_` prefix, no `internal/` segregation)
 - Missing barrel exports where convention says to have them
 
+### 11. Module split candidates (size is the trigger, responsibility is the verdict)
+
+Line count only selects WHAT to inspect. A 3,000-line file with one reason to change is fine; a 300-line file with three is not.
+
+**Step 1 — shortlist (run directly, no agent):**
+```bash
+git ls-files '*.py' '*.js' '*.jsx' | grep -v "tests/\|research/\|\.test\." | xargs wc -l | sort -rn | sed -n 2,16p
+```
+Inspect files > ~1,000 lines (backend) / > ~600 lines (frontend component), plus any router > ~400 lines.
+
+**Step 2 — cohesion probes per shortlisted file (grep-level, do not read the whole file):**
+- Top-level symbol inventory: `grep -n "^def \|^async def \|^class " FILE` — cluster by name prefix (`_feed_*`, `_notify_*`, `_rebook_*`). Three or more clusters with no shared private state = separable responsibilities.
+- Import fan-in by cluster: for each cluster, which other modules import its symbols? Disjoint caller sets = the clusters are already separate modules in everything but location.
+- Import fan-out: section-local imports (or lazy `from x import y` inside functions) that only one cluster uses.
+- Co-change: `git log --since="3 months ago" --format= --name-only -- FILE | wc -l` and skim the commit subjects — unrelated subjects (feed fix / UI payload / notification wording) hitting the same file = multiple reasons to change.
+- Module-level mutable state: which functions touch which globals? Clusters that share no globals split cleanly; clusters sharing a lock or cache do NOT (splitting them turns one invariant into a cross-module contract).
+- Frontend: a component file holding several components + data shaping + fetch logic; hooks/formatters that belong in `hooks/` / `lib/`.
+
+**Step 3 — verdict per file:** `split` / `extract one piece` / `leave`.
+
+Say `leave` when:
+- One reason to change, however long (a state machine, a single executor).
+- The split would scatter a family that is single-sourced today — a registry + its members belong together.
+- The file is on a parity boundary (backtest == live, writer == reader) and the split would put the two halves in different modules.
+- The only argument is line count.
+
+**Budget:** steps 1-2 are a handful of greps — run them inline. At most ONE agent, and only to probe the shortlist, never one per file.
+
 ## How to scan efficiently
 
 1. **Read the convention docs first** (CLAUDE.md, README.md) — write down the rules
@@ -99,17 +127,23 @@ Mixed patterns = review finding.
 ## Structure findings
 
 ### Convention violations
-- `components/chart/tradeSidebar.jsx` — CLAUDE.md says components are PascalCase → should be `TradeSidebar.jsx`
+- `components/chart/itemSidebar.jsx` — CLAUDE.md says components are PascalCase → should be `ItemSidebar.jsx`
 
 ### Misplaced files
-- `backend/routers/portfolio.py:60-90` — cache logic should live in `engine/` or a dedicated `cache/` module
+- `<server>/routers/portfolio.py:60-90` — cache logic should live in `engine/` or a dedicated `cache/` module
 
 ### Cross-layer imports
-- `backend/engine/pnl.py:12` imports from `routers/` — violates layering
+- `<server>/engine/pnl.py:12` imports from `routers/` — violates layering
 
 ### Inconsistent grouping
 - Feature X is colocated under `components/featureX/`, but Feature Y is scattered across `components/`, `hooks/`, `lib/`
 
+### Module split candidates
+| File | Lines | Responsibilities found (evidence) | Verdict | Proposed cut |
+|------|-------|-----------------------------------|---------|--------------|
+| `<server>/routers/x.py` | 878 | routing; position prefetch pool (L500-515, only caller = one route); payload shaping | extract one piece | prefetch → `engine/x_prefetch.py` |
+| `<server>/jobs/y.py` | 4100 | single scheduler loop + its window hooks (shared `_STATE` lock) | leave | — |
+
 ### Structural suggestions
-- Consider creating `src/<pkg>/config.py` for shared constants currently duplicated across modules
+- Consider creating `<server>/config/` for shared constants currently duplicated across modules
 ```

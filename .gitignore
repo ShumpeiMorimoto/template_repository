@@ -62,5 +62,6 @@ service_account*.json
 logs/
 *.log
 .tmp/
+.scratch/
 
 # Do NOT ignore uv.lock — it should be committed for reproducible installs

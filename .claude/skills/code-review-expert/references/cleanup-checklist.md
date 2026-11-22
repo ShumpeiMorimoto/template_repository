@@ -10,7 +10,7 @@ Python and JS files that exist on disk but are imported from nowhere.
 **Detection**:
 ```bash
 # For each Python file in src/, check if its module name appears in any import
-for f in $(find src -name "*.py"); do
+for f in $(find backend -name "*.py"); do
   module=$(basename "$f" .py)
   count=$(grep -r "import $module\|from .*$module" --include="*.py" src/ | wc -l)
   if [ "$count" -le 1 ]; then echo "ORPHAN: $f"; fi
@@ -77,7 +77,7 @@ Flag anything > 5 MB that isn't clearly source code.
 
 ### 7. Duplicate / near-duplicate files
 Two files that do the same thing, typically from a failed refactor or a legacy/v2 split:
-- `predict_universal.py` vs `predict_lgbm.py` (when one is legacy)
+- `predict_v1.py` vs `predict_v2.py` (when one is legacy)
 - `old_foo.py` vs `foo.py`
 - Similar file sizes, similar names, overlapping function names
 

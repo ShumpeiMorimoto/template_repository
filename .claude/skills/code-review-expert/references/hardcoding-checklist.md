@@ -27,14 +27,14 @@ Hardcoded values are a frequent source of bugs, maintenance burden, and duplicat
 
 Example pattern to catch:
 ```
-fileA.py:  SBI_LOGIN_URL = "https://..."
-fileB.py:  SBI_LOGIN_URL = "https://..."   # DUPLICATE — should be shared
+fileA.py:  VENDOR_LOGIN_URL = "https://..."
+fileB.py:  VENDOR_LOGIN_URL = "https://..."   # DUPLICATE — should be shared
 ```
 
 **How to find**:
 - Grep for the same string literal across all source files
 - Check for the same constant name defined in multiple modules
-- Look for SBI/API/model names that appear in >1 file
+- Look for vendor/API/model names that appear in >1 file
 
 ### 4. Environment-specific values hardcoded
 - Windows paths (`C:\Users\...`) in cross-platform code
@@ -44,7 +44,8 @@ fileB.py:  SBI_LOGIN_URL = "https://..."   # DUPLICATE — should be shared
 ### 5. Color values / CSS in JS
 - Hex colors (`#10b981`) in JSX/JS when a design system exists
 - Inline style objects that bypass theme variables
-- Tailwind classes with arbitrary values (`bg-[#f8fafc]`) when a semantic token exists
+- Utility-CSS classes with arbitrary values (`bg-[#f8fafc]`) when a semantic token exists
+- Named utility-CSS colours that only work in one theme (`bg-slate-900`, `text-slate-100` without a light counterpart) — the hex scan does not see these
 
 ### 6. Values that should be config
 - User agent strings

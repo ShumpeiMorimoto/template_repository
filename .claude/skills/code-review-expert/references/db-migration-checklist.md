@@ -114,14 +114,14 @@ Already covered in `code-quality-checklist.md`, but DB-specific smells:
 
 ### P0 - Destructive without plan
 - `migrations/20260401_drop_old_cols.sql` — drops columns still read by frontend
-- `scripts/cleanup.py:45` — `DELETE FROM trades` with no WHERE
+- `scripts/cleanup.py:45` — `DELETE FROM orders` with no WHERE
 
 ### P1 - Missing indexes
-- `routers/trades.py:44` — new query on `trades.ticker`, not indexed for this access pattern
+- `routers/orders.py:44` — new query on `orders.item_id`, not indexed for this access pattern
 - New join path in `portfolio.py:78` — FK missing index on child side
 
 ### P1 - Transaction gaps
-- `routers/sync.py:30` — writes trades + updates cache in separate statements, no transaction
+- `routers/sync.py:30` — writes orders + updates cache in separate statements, no transaction
 
 ### P2 - Long-running migration
 - `migrations/backfill_predictions.py` — updates all rows at once, no batching

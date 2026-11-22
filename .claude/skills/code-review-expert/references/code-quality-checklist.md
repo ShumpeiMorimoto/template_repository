@@ -149,12 +149,12 @@ When two functions do the SAME job but one was updated and the other wasn't.
 
 1. **Two writers, one updated, one stale**
    ```python
-   def update_single_ticker(ticker):           # used by daily_update --quick
-       df = yf.download(ticker)
+   def update_single_item(key):              # used by the quick-refresh job
+       df = fetch(key)
        df.to_parquet(path)                     # ← saves MultiIndex (stale)
 
-   def run_collection(mode):                   # used by daily_update --weekly
-       df = yf.download(ticker)
+   def run_collection(mode):                   # used by the weekly full-refresh job
+       df = fetch(key)
        if isinstance(df.columns, pd.MultiIndex):
            df.columns = df.columns.get_level_values(0)
        df.to_parquet(path)                     # ← saves flat (correct)
@@ -172,17 +172,17 @@ When two functions do the SAME job but one was updated and the other wasn't.
 
 3. **Helper exists but is only called in one place**
    ```python
-   def _dismiss_passkey(page): ...        # 80 lines of careful logic
+   def _dismiss_popup(page): ...          # 80 lines of careful logic
 
    def login(page):
        fill_credentials()
        wait_for_dashboard()
-       _dismiss_passkey(page)             # ← called here, after waiting
+       _dismiss_popup(page)               # ← called here, after waiting
 
    def _wait_for_dashboard(page):
        for _ in range(60):
            if is_logged_in(page): return
-           # ← _dismiss_passkey not called inside the loop!
+           # ← _dismiss_popup not called inside the loop!
            sleep(1)
    ```
    The helper is technically "used" but the place that actually NEEDS it doesn't call it.
@@ -194,7 +194,7 @@ When two functions do the SAME job but one was updated and the other wasn't.
 3. **Helper saturation**: For each non-trivial helper function, grep all call sites. Ask: "Are there places that conceptually need this but don't call it?"
 4. **Use the runtime-health-checklist**: writer/reader pair audit catches this in production data, not just code.
 
-**Why this matters**: In a previous project this pattern caused both an empty-screener bug (writer pair drift) and a broken broker login (helper not called in the polling loop). The static checklist alone missed both.
+**Why this matters**: Typical consequences: an empty downstream result caused by writer-pair drift, or a browser-automation login that hangs because the popup helper is not called inside the polling loop. Static review alone usually misses both.
 
 ### Order-of-operation bugs in helpers
 

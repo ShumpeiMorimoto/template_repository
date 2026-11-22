@@ -1,12 +1,14 @@
 ---
 name: code-review-expert
-description: "Expert code review with a senior engineer lens. Detects security, SOLID, quality, testing, observability, API contract, DB/migration, hardcoding, dead code, structure, dependency, documentation, and runtime health issues (data drift, helper saturation, sibling function inconsistency). Supports diff-only (quick) and project-wide (full) modes."
+description: "Generic code review with a senior engineer lens: security, SOLID, quality, testing, observability, API contract, DB/migration, hardcoding, dead code, structure, dependency, documentation, runtime health, plus any repository-specific rules the repo provides. Works on any codebase. Supports diff-only (quick) and project-wide (full) modes."
 ---
 # Code Review Expert
 
 ## Overview
 
 Perform a structured review of the codebase. **Default to review-only output** unless the user asks to implement changes.
+
+> When a repo provides an orchestrating review skill, follow the scope it assigns.
 
 ## Review modes
 
@@ -36,7 +38,7 @@ After completing a quick review, **always offer a full review as a follow-up**: 
 
 - Run `git status -sb`, `git diff --stat`, `git diff` to scope changes.
 - Read `CLAUDE.md` or equivalent project docs to understand architecture, conventions, and anything marked `(legacy)` / `(deprecated)`.
-- **Enumerate ALL documentation files** with `find . -name "*.md" -not -path "*/node_modules/*" -not -path "*/.git/*" -not -path "*/.venv/*"`. Do NOT assume docs live only in `README.md` and `CLAUDE.md` — projects often have `dev-docs/`, `docs/`, `wiki/`, `<area>/CLAUDE.md`, etc. Missing this step is a known cause of doc drift slipping past review.
+- **Enumerate ALL documentation files** with `find . -name "*.md" -not -path "*/node_modules/*" -not -path "*/.git/*" -not -path "*/.venv/*"`. Do NOT assume docs live only in `README.md` and `CLAUDE.md` — projects often have `docs/`, `wiki/`, per-directory rules files, etc. Missing this step is a known cause of doc drift slipping past review.
 - Identify entry points, ownership boundaries, and critical paths (auth, payments, data writes, network).
 
 **Edge cases:**
@@ -98,9 +100,9 @@ Phase 3 must stay within **10 agents total** across all sub-phases. Sub-agents m
 
 **How to stay within budget:**
 - **Orphan file checks**: use a single `grep -rL "import MODULE\|from MODULE" src/` command per candidate, NOT one agent per file. Batch candidates into a single agent that runs grep commands sequentially.
-- **Research / one-off scripts** (e.g. `scripts/research/`): skip individual verification entirely. These are CLI-ONLY by convention — flag the directory count in the report and move on.
+- **One-off research/experiment scripts** (if the repo has such a directory): skip individual verification. These are CLI-only throwaway scripts by convention — flag the directory count in the report and move on.
 - **Hardcoding / magic numbers**: one agent covers all of 3a (grep for literals, URLs, duplicates). Do NOT split into separate agents for numbers, strings, paths, etc.
-- **Cross-file consistency (3c)**: one agent covers naming + error handling + design tokens. Grep-based, not file-by-file inspection.
+- **Cross-file consistency (3c)**: one agent covers naming + error handling + color system. Grep-based, not file-by-file inspection.
 - If a sub-phase can be done with 2-3 grep commands, run them directly instead of spawning an agent.
 
 **3a) Hardcoding scan** — load `references/hardcoding-checklist.md`
@@ -120,7 +122,7 @@ Phase 3 must stay within **10 agents total** across all sub-phases. Sub-agents m
 - Naming conventions (snake_case vs camelCase for same concept)
 - Error handling patterns (all routes log? all endpoints auth?)
 - Input validation (validated at one layer but not another?)
-- Design system usage (hex colors bypassing theme variables?)
+- Design system usage (hex colors bypassing theme variables?) — theme parity, duplicate UI and rendered checks belong to a dedicated UI review if the repo has one
 
 **3d) File & directory structure scan** — load `references/structure-checklist.md`
 - Convention violations vs stated rules in CLAUDE.md / README.md
@@ -128,6 +130,7 @@ Phase 3 must stay within **10 agents total** across all sub-phases. Sub-agents m
 - Cross-layer imports that violate architecture
 - Inconsistent grouping across similar features
 - Orphan/empty directories, generated files mixed with source
+- **Module split candidates** (checklist §11): shortlist the largest files by `wc -l`, then judge each by responsibility (symbol clusters, disjoint callers, co-change history, shared module state) — verdict `split` / `extract one piece` / `leave`. Line count alone is never a finding. Report as the "Module split candidates" table.
 
 **3e) Dependency health** — load `references/dependencies-checklist.md`
 - Declared but unused deps (size/security impact)
@@ -158,10 +161,7 @@ Phase 3 must stay within **10 agents total** across all sub-phases. Sub-agents m
 - **This phase catches what static review CANNOT see**: data drift, pipeline silently stopped, external service changes, helper-not-called-in-loop bugs.
 - Each check should be < 2 minutes. If a check would take longer, ask the user before running.
 
-**3i) Project-specific patterns** — load `references/project-specific-checklist.md`
-- Carried-over rules **A1–A7** apply to every project (lessons from earlier incidents). Run them in quick mode too whenever the diff is a cross-cutting fix or adds a family member.
-- Project incidents **A8+** and runtime checks **R1+** are appended to that file as this project accumulates history. Apply each one explicitly.
-- Cross-reference the "Files that need extra attention" table — if the diff touches one of those files, every linked rule must be considered.
+**3i) Repository rules** — if the repo has its own review rules (e.g. a project skill's rules file, CLAUDE.md, CONTRIBUTING), load them and cite their rule IDs; the caller may pass the path.
 
 ### Phase 4 — Report
 
@@ -177,9 +177,9 @@ Output format:
 ## Coverage declaration
 - ✅ Scanned: security, SOLID, code quality, testing quality, observability
 - ✅ Scanned (if applicable to diff): API contract, database & migrations
-- ✅ Scanned (full mode only): hardcoding, dead code, cross-file consistency, file/directory structure, dependency health, documentation consistency, runtime health, project-specific anti-patterns (A1–A7 + A8…) and runtime checks (R1…)
+- ✅ Scanned (full mode only): hardcoding, dead code, cross-file consistency, file/directory structure, dependency health, documentation consistency, runtime health, repository rules (if any were loaded)
 - ⚠️ Sampled but not exhaustive: runtime health checks sample data files and skim recent logs — rare-shape outliers and intermittent failures may slip through
-- ⚠️ NOT scanned (require dedicated tooling): <list explicitly — e.g. "frontend accessibility", "i18n", "ML model correctness", "business logic correctness", "load/stress testing", "production monitoring drift", "long-running pipeline integration tests">
+- ⚠️ NOT scanned (require dedicated tooling): <list explicitly — e.g. "frontend accessibility", "i18n", "model/algorithm correctness", "business logic correctness", "load/stress testing", "production monitoring drift", "long-running pipeline integration tests">
 - ⚠️ Cannot detect by review alone (need real test suite + monitoring):
   - Race conditions only manifest under load
   - External services drifting in the future (e.g., third-party UI changes next month)
@@ -212,6 +212,11 @@ Output format:
 | File:Line | Value | Duplicates | Should live in |
 |-----------|-------|------------|----------------|
 | ... | ... | ... | ... |
+
+## Module split candidates (full mode)
+| File | Lines | Responsibilities found (evidence) | Verdict | Proposed cut |
+|------|-------|-----------------------------------|---------|--------------|
+| ... | ... | ... | split / extract one piece / leave | ... |
 
 ## Cleanup candidates (full mode)
 ### Tier 1: Safe to delete
@@ -275,5 +280,4 @@ I found X issues (P0: _, P1: _, P2: _, P3: _).
 | `dependencies-checklist.md`   | Unused/missing deps, CVEs, lockfile integrity, license/health |
 | `documentation-checklist.md`  | Stale doc references, architecture drift, missing sections, terminology consistency |
 | `runtime-health-checklist.md` | Data freshness, schema drift, writer/reader pairs (incl. staleness), helper saturation, smoke tests, log inspection, cache TTL bugs, scheduled-task LastRun |
-| `project-specific-checklist.md` | Carried-over rules A1–A7 (N-1 siblings, dead report paths, mis-named statistics, unreviewed fix batches, never-executed code, scattered registration, god files) + this project's own incidents (A8+), runtime checks (R1+), and a "files needing extra attention" table |
 | `removal-plan.md`             | Template for deletion candidates and follow-up plan |

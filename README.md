@@ -180,9 +180,10 @@ This repository ships a [Claude Code](https://docs.claude.com/en/docs/claude-cod
 | `.claude/hooks/check-lint.sh` | Blocks `git commit` when staged Python fails ruff / ruff format / ty |
 | `.claude/hooks/require-*-model.py` | Requires an explicit `model` on subagents and workflows |
 | `.claude/skills/bootstrap-project/` | One-time: turn this template into a named project |
-| `.claude/skills/code-review-expert/` | Structured quick/full code review with checklists |
+| `.claude/skills/review/` | Review entry point: routes a diff to specialist skills, merges and verifies one report; holds the repo rules (`references/project-rules.md`) |
+| `.claude/skills/code-review-expert/` | Generic structured quick/full code review with checklists |
+| `.claude/skills/harvest/` | Feeds reusable assets of a finished project back into the template |
 | `.claude/skills/drawio/` | Generate draw.io diagrams |
-| `.claude/skills/professional-doc-architect/` | Framework for technical documentation |
 | `.claudeignore` | Keeps caches, data and lock files out of Claude's context |
 
 Personal overrides go in `.claude/settings.local.json` (git-ignored).
@@ -241,6 +242,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 Your Name - your.email@example.com
 
 Project Link: [https://github.com/yourusername/your-repo-name](https://github.com/yourusername/your-repo-name)
+
+## Project Status
+
+<active | maintenance mode since YYYY-MM | archived> — <what still runs, what kind of change is accepted>
 
 ## Roadmap
 

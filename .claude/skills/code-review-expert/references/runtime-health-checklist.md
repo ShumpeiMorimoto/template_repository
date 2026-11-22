@@ -4,7 +4,7 @@ Static review reads what code SAYS. Runtime health checks see what code IS DOING
 
 This checklist exists because of past blind spots:
 - A scheduled pipeline silently stopped updating data for a week (bug masked by stale outputs)
-- 425 parquet files were saved with the wrong column shape; readers failed silently and downstream returned empty results
+- Hundreds of data files were saved with the wrong column shape; readers failed silently and downstream returned empty results
 - An external login flow added a new popup that broke automation; nothing in the code changed
 
 None of these would be caught by linting, typing, tests, or doc reviews. Run the checks below explicitly during full reviews.
@@ -23,7 +23,7 @@ For each data directory the project depends on, check the most recent file modif
 
 ```bash
 # File mtime — when the writer last touched the file
-ls -lt data/raw/*.parquet | head -5
+ls -lt <data_dir>/*.parquet | head -5
 
 # Internal date — what the data actually covers (the last row's date)
 # This gap reveals "writer ran but produced no fresh rows" silent failures
@@ -35,10 +35,9 @@ ls -lt data/raw/*.parquet | head -5
 - Inconsistent freshness across files (some updated, some stuck)
 - Empty files (size < expected baseline)
 
-**Examples to check** (replace with this project's data dirs):
-- `data/raw/*` — raw inputs written by a scheduled collector
-- `data/processed/*` — derived outputs (reports, screens, aggregates)
-- `data/state/*` — journals / logs the app appends to
+**Examples to check:**
+- For each external feed or dataset the app depends on: compare its newest timestamp against its expected cadence (daily feed → newer than 1 business day; weekly feed → newer than 7 days)
+- For each derived output (report, scoring result, exported file): compare its mtime against the job that produces it
 - Cache tables in DB
 
 ### 2. Production data shape verification
@@ -62,7 +61,7 @@ assert df.index.dtype == expected_dtype
 **How to detect quickly:**
 ```bash
 # For Parquet, parquet-tools or pyarrow
-python -c "import pyarrow.parquet as pq; print(pq.read_schema('data/raw/SAMPLE.parquet'))"
+python -c "import pyarrow.parquet as pq; print(pq.read_schema('<data_dir>/SAMPLE.parquet'))"
 ```
 
 ### 3. Writer / Reader pair audit (schema AND staleness)
@@ -77,7 +76,7 @@ For every persisted artifact, identify:
 - Two writers exist; one is updated, the other still saves the old format
 - Writer was updated; readers were not
 - Reader uses `columns=[...]` projection that depends on a flat schema; writer started saving MultiIndex
-- **Sibling reader inconsistency**: 5 places read `data/raw/*.parquet`; 1 has a "if file is older than 2 days, fall through to live fetch" path, the other 4 use whatever's on disk → some endpoints surface stale prices, others don't, depending on which call site the user hits
+- **Sibling reader inconsistency**: 5 places read the same data directory; 1 has a "if file is older than 2 days, fall through to live fetch" path, the other 4 use whatever's on disk → some endpoints surface stale prices, others don't, depending on which call site the user hits
 
 **Detection:**
 ```bash
@@ -85,16 +84,16 @@ For every persisted artifact, identify:
 grep -rn "to_parquet\|json.dump\|pickle.dump" src/
 
 # For each artifact, find the matching read calls
-grep -rn "read_parquet.*data/raw\|json.load" src/
+grep -rn "read_parquet.*<data_dir>\|json.load" src/
 ```
 
 For each pair, ask:
 1. Is there exactly one writer? If multiple, do they agree?
 2. Does the reader make assumptions (columns subset, dtype, index name) that the writer doesn't enforce?
 3. What happens if the writer's library is upgraded? Will the reader still work?
-4. **Do ALL readers check freshness, or only some? If only some, the others will silently serve stale data when the writer falls behind.** The fix is usually to centralize reads through a shared loader (e.g. `engine/market_data.fetch_historical_data`) that owns the staleness policy.
+4. **Do ALL readers check freshness, or only some? If only some, the others will silently serve stale data when the writer falls behind.** The fix is usually to centralize reads through a shared loader (e.g. a single `load_dataset()` function) that owns the staleness policy.
 
-**Anti-pattern to flag**: any non-test file that calls `pd.read_parquet(<raw_data_path>)` directly. These should go through the project's data-access layer so the freshness check is applied uniformly.
+**Anti-pattern to flag**: any non-test file that calls `pd.read_parquet(<raw_data_path>)` (or equivalent raw read) directly. These should go through the project's data-access layer so the freshness check is applied uniformly.
 
 ### 4. Helper call-site completeness
 
@@ -102,10 +101,10 @@ Helper functions like `_dismiss_*`, `_cleanup_*`, `_normalize_*`, `_validate_*` 
 
 ```bash
 # Find the helper definition
-grep -n "def _dismiss_passkey" src/
+grep -n "def _dismiss_popup" src/
 
 # Find ALL call sites
-grep -rn "_dismiss_passkey" src/
+grep -rn "_dismiss_popup" src/
 ```
 
 **Red flags:**
@@ -122,14 +121,14 @@ grep -rn "_dismiss_passkey" src/
 
 For the project's top 3-5 user-facing flows, manually invoke each and check the output:
 
-**Example flows** (replace with this project's top flows):
-- Sync external data (third-party export → parse → DB upsert)
-- Run the scheduled pipeline end to end (collect → transform → write outputs)
+**Example flows for this kind of project:**
+- Sync external data (fetch → transform → DB upsert)
+- Run the main scheduled pipeline (collect → preprocess → score → persist)
 - Hit each API endpoint with a sample request and verify non-empty response
 - Render the main UI page and check for empty states
 
 **What to look for:**
-- Endpoint returns 200 but body is `{"daytrade": [], "swing": []}`
+- Endpoint returns 200 but body is `{"items": [], "groups": []}`
 - Pipeline exits 0 but no files were written
 - DB query returns rows but all NULL in critical columns
 - UI loads but a section is blank
@@ -142,11 +141,10 @@ List every external service the project touches, then ask "when was this last ve
 
 | Integration | Last verified | How to verify |
 |-------------|---------------|---------------|
-| <scraped website> | ? | run the scraper once against 1 item |
-| <data API> | ? | fetch 1 known record with `uv run python -c ...` |
-| <LLM / SaaS API> | ? | 1 minimal request |
-| <database> | ? | `SELECT NOW()` |
-| Claude CLI (if used headless) | ? | `claude --version` |
+| Third-party data API | ? | one sample request, check the newest row/timestamp |
+| Scraper / browser automation | ? | run the sync once end-to-end |
+| Hosted database | ? | `SELECT NOW()` |
+| External CLI tool | ? | `<tool> --version` |
 
 **Red flags:**
 - Integration not verified in > 30 days
@@ -195,7 +193,7 @@ systemctl list-timers --all
 journalctl -u <service> --since "7 days ago"
 
 # Number of files modified by the last run
-find data/raw -mtime -1 | wc -l    # should match the expected item count
+find <data_dir> -mtime -1 | wc -l    # should match the expected item count
 ```
 
 **Anti-pattern to flag**: a recently re-registered task whose `Last Run = never`. Reviewers (and humans) often see "task is registered, schedule looks correct" and stop there — but the task has produced zero work since registration. Always check `Last Run`, not just registration.
@@ -369,18 +367,18 @@ Each step should take < 2 minutes. If a step would take longer, ask the user whe
 ## Runtime Health Findings
 
 ### P0 - Pipeline broken
-- `data/raw/*.parquet` — 425/2002 files have MultiIndex columns; manager.py reader fails silently → screener returns 0 results
-- `data/raw/*.parquet` — last update mtime is 7 days ago; daily_update has been failing silently
+- `<data_dir>/*.parquet` — 425/2002 files have MultiIndex columns; the loader fails silently → downstream job returns 0 results
+- `<data_dir>/*.parquet` — last update mtime is 7 days ago; the daily job has been failing silently
 
 ### P1 - Helper not called everywhere needed
-- `_dismiss_passkey` exists but is only called in `_dismiss_notices` (which runs AFTER login). Should also be called inside the login polling loop.
+- `_dismiss_popup` exists but is only called in `_dismiss_notices` (which runs AFTER login). Should also be called inside the login polling loop.
 
 ### P2 - External integration not verified
-- SBI sync hasn't been run in 14 days; SBI may have changed UI
-- Last successful daily_update: 2026-03-31
+- The external sync hasn't been run in 14 days; the third-party site may have changed its UI
+- Last successful run of the daily job: 2026-03-31
 
 ### P3 - Stale data freshness vs file mtime
-- `paper_trade_log.parquet` mtime is today, but `actual_ret_5d` is None for all rows (evaluator can't find raw data)
+- `results.parquet` mtime is today, but `actual_value` is None for all rows (evaluator can't find its input data)
 ```
 
 ## What this checklist does NOT catch
