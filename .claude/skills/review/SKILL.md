@@ -10,7 +10,7 @@ One report, many lenses. This skill owns **routing, merging and verification**; 
 
 | Changed path (glob) | Specialist | Notes |
 |---|---|---|
-| `src/**`, `tests/**`, `scripts/**` | `code-review-expert` | generic quality + repo rules A1–A11 |
+| `src/**`, `tests/**`, `scripts/**` | `code-review-expert` | generic quality + repo rules A1–A18 |
 | docs only (`*.md` outside `.claude/skills/`) | none | say "docs-only, no review needed" |
 | `<area>/**` | `<specialist>` | create a specialist only for an area with its own invariants and costly failures |
 
@@ -29,7 +29,7 @@ Shared repo rules for every specialist: `.claude/skills/review/references/projec
    - full: every routing row, full-project mode in each specialist. Confirm with the user first — it is the expensive path.
    - Check `date` and what is running before anything that restarts or rebuilds a live process.
 2. **Route** with the table above. Print the plan in one line: `ui-review(frontend/x.jsx) + code-review-expert(src/z.py)`.
-3. **Run specialists in parallel**, each as a subagent. Prompts must satisfy `.claude/hooks/require-agent-model.py`: pass an explicit `model` (`sonnet` for standard diffs, `opus` for high-risk changes) and end the prompt with the `[AGENT-RULES v1]` footer. Prompt body: "Follow the `<name>` skill in <quick|full> mode on these files: …. Repository rules: `.claude/skills/review/references/project-rules.md` — apply the A-rules relevant to these files. Report findings as `[P0-P3] file:line — claim — rule ID — evidence`." `code-review-expert` is deliberately generic (no repo knowledge, so it stays portable) — the rules path in the prompt is how it learns this repo. At most 3 specialists per run; if more rows match, run the highest-risk three and list the rest as not reviewed.
+3. **Run specialists in parallel**, each as a subagent. Prompts must satisfy `.claude/hooks/require-agent-model.py`: pass an explicit `model` (`sonnet`; `opus` only for one short, bounded high-risk question, with an `[OPUS: <reason>]` tag in the prompt) and end the prompt with the `[AGENT-RULES v2]` footer. Prompt body: "Follow the `<name>` skill in <quick|full> mode on these files: …. Repository rules: `.claude/skills/review/references/project-rules.md` — apply the A-rules relevant to these files. Report findings as `[P0-P3] file:line — claim — rule ID — evidence`." `code-review-expert` is deliberately generic (no repo knowledge, so it stays portable) — the rules path in the prompt is how it learns this repo. At most 3 specialists per run; if more rows match, run the highest-risk three and list the rest as not reviewed.
    - **Runtime rules (full mode only)**: run the R-checks in `project-rules.md` yourself; a stale result is P1.
 4. **Merge**: de-duplicate by (file, line ±3, same root cause); keep the highest severity and every rule ID; drop findings outside the diff in quick mode unless P0.
 5. **Verify** every P0/P1 yourself before reporting: open the cited code, reproduce the claim (run the test / grep / screenshot the state). Drop what does not reproduce; mark what you could not reproduce as "unverified".

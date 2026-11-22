@@ -45,6 +45,7 @@ except Exception as e:
 - Promises/futures without error handlers
 - Background threads with no error reporting
 - Fire-and-forget async calls without `.catch()`
+- Spawned background tasks (`asyncio.create_task` and equivalents): keep a strong reference (an unreferenced task can be garbage-collected mid-run), log failures via an inner `try/except` or a done-callback, cancel on the owner's teardown, cancel the old task before reassigning its slot, and re-raise cancellation instead of swallowing it
 - **Loops that `continue` without categorized skip logging** — see code-quality-checklist "Silent skips in loops". The summary log at the end of a loop must distinguish "processed N", "expected-pending N", and "input-missing N" so that a stalled pipeline is obvious from the log alone, not "0 evaluated, exit 0".
 
 **Detection**: grep for `except.*:\s*pass`, `.catch(() => {})`, empty error handlers, and `continue$` without a preceding `logger` call.

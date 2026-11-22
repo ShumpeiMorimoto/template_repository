@@ -11,6 +11,9 @@ dist/
 build/
 *.egg
 
+# Node (if a JS toolchain is added)
+node_modules/
+
 # Caches
 .pytest_cache/
 .ruff_cache/

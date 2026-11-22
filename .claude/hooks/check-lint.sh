@@ -11,6 +11,10 @@ case "$command" in
   *) exit 0 ;;
 esac
 
+case "$command" in
+  *"--no-verify"*) exit 0 ;;
+esac
+
 mapfile -t staged_py < <(git diff --cached --name-only --diff-filter=ACM 2>/dev/null | grep -E '\.py$' || true)
 if [ "${#staged_py[@]}" -eq 0 ] || ! command -v uv >/dev/null 2>&1; then
   exit 0

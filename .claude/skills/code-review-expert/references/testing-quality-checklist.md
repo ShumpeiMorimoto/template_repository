@@ -38,6 +38,7 @@ Tests that mock so much they test nothing real:
 - Tests that depend on test execution order
 - Tests that share mutable state (class-level fixtures, globals)
 - Random seeds not pinned
+- An input taken from the machine (free memory, CPU count, load, start order of processes) that selects a branch → passes alone, fails beside another job. Pin it through a seam or the tool's own switch and assert both sides of the branch; loop a test of a concurrent tool (>= 20 runs) before accepting it
 
 **Detection**: grep for `sleep`, `datetime.now`, `Date.now`, `random.` in test files.
 
@@ -46,6 +47,7 @@ Tests that mock so much they test nothing real:
 - Tests that require network access (should be mocked or skipped with marker)
 - Tests that write to the real filesystem outside `tmp_path` / test fixtures
 - Tests that require specific env vars without documenting it
+- Tests that behave differently on a machine holding real credentials or real state: strip credential env vars, point the state directory at `tmp_path`, and replace singletons built at import time (they read config before any fixture runs)
 
 ### 6. Coverage blind spots
 Areas typically missed even at high line-coverage %:
@@ -74,6 +76,7 @@ Areas typically missed even at high line-coverage %:
 - **Testing logs instead of behavior**: `assert "error" in caplog.text`
 - **Over-specified assertions**: asserting exact dict equality when only one field matters
 - **Brittle UI snapshots**: snapshotting entire DOM trees that change with any styling tweak
+- **A statistical target asserted as an invariant**: only invariants fail the build (exactness, conservation, determinism, no crash). A rate, band or density is a monitor — record the value with its plausible range and source, report only large excursions, and never tune the code toward the range
 
 ### 10. Orphaned or broken tests
 - Tests importing deleted modules (will fail at collection)

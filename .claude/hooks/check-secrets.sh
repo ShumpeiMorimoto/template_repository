@@ -42,13 +42,18 @@ while IFS= read -r file; do
   blob="$(git show ":$file" 2>/dev/null || true)"
   [ -z "$blob" ] && continue
 
+  # In code files an unquoted right-hand side is an expression (os.environ[...]), never a literal.
   # '#' excluded so `KEY=  # comment` (empty value with trailing comment) is not flagged.
-  if printf '%s' "$blob" | grep -qE "^[[:space:]]*(export[[:space:]]+)?${SECRET_VARS}[[:space:]]*=[[:space:]]*[^[:space:]\"'#]"; then
-    findings+=("$file: hardcoded credential value (use .env, not committed files)")
-  fi
+  case "$file" in
+    *.py|*.js|*.mjs|*.cjs|*.jsx|*.ts|*.tsx) ;;
+    *)
+      if printf '%s' "$blob" | grep -qE "^[[:space:]]*(export[[:space:]]+)?${SECRET_VARS}[[:space:]]*=[[:space:]]*[^[:space:]\"'#]"; then
+        findings+=("$file: hardcoded credential value (use .env, not committed files)")
+      fi ;;
+  esac
 
-  if printf '%s' "$blob" | grep -qE '(AKIA[0-9A-Z]{16}|sk-[A-Za-z0-9_-]{20,}|gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|xox[abprs]-[A-Za-z0-9-]{10,}|AIza[0-9A-Za-z_-]{35})'; then
-    findings+=("$file: API key pattern (AWS/OpenAI/Anthropic/GitHub/Slack/Google)")
+  if printf '%s' "$blob" | grep -qE '(AKIA[0-9A-Z]{16}|sk-[A-Za-z0-9_-]{20,}|gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|xox[abprs]-[A-Za-z0-9-]{10,}|AIza[0-9A-Za-z_-]{35}|eyJ[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}\.)'; then
+    findings+=("$file: API key pattern (AWS/OpenAI/Anthropic/GitHub/Slack/Google/JWT)")
   fi
 
   if printf '%s' "$blob" | grep -qE -- '-----BEGIN ([A-Z]+ )?PRIVATE KEY-----'; then

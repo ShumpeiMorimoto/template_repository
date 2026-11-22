@@ -178,12 +178,12 @@ This repository ships a [Claude Code](https://docs.claude.com/en/docs/claude-cod
 | `.claude/settings.json` | Denies reading `.env` / credentials; wires the hooks below |
 | `.claude/hooks/check-secrets.sh` | Blocks `git commit` when staged files contain secrets or `.env` files |
 | `.claude/hooks/check-lint.sh` | Blocks `git commit` when staged Python fails ruff / ruff format / ty |
-| `.claude/hooks/require-*-model.py` | Requires an explicit `model` on subagents and workflows |
+| `.claude/hooks/require-*-model.py` | Requires an explicit `model` on subagents and workflows, plus the standard rules footer on subagent prompts |
+| `.claude/hooks/require-japanese.py` | Blocks a final reply that is mostly English (conversation language is Japanese) |
 | `.claude/skills/bootstrap-project/` | One-time: turn this template into a named project |
 | `.claude/skills/review/` | Review entry point: routes a diff to specialist skills, merges and verifies one report; holds the repo rules (`references/project-rules.md`) |
 | `.claude/skills/code-review-expert/` | Generic structured quick/full code review with checklists |
 | `.claude/skills/harvest/` | Feeds reusable assets of a finished project back into the template |
-| `.claude/skills/drawio/` | Generate draw.io diagrams |
 | `.claudeignore` | Keeps caches, data and lock files out of Claude's context |
 
 Personal overrides go in `.claude/settings.local.json` (git-ignored).

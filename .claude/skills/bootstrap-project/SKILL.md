@@ -44,13 +44,13 @@ git mv src/your_package src/<pkg>
 - `CLAUDE.md`: 先頭の `<!-- TEMPLATE: ... -->` を削除。Tech Stack / Naming / Domain Knowledge の `<...>` を埋めるか行ごと削除。
 - `README.md`: Features / Usage / Configuration / Roadmap をプロジェクトに合わせるか削除。`AI-assisted development` 節は残す。`## Project Status` の `<active | maintenance mode since YYYY-MM | archived> — ...` を現状で埋める（コードが生きているか読み手が分かるように。状態が変わったら更新）。
 - **コード構成を決める（必須）**: 採用スタックに合わせて `CLAUDE.md` の `## Code organization` 直下に次を書く。(1) 初期ディレクトリ/モジュール構成、(2) 「新しいコードの置き場所」表（機能種別 → ディレクトリ/ファイル）、(3) モジュール機構（このスタックでファイル同士がどう import / 登録し合うか。例: Python は package + `__init__.py`、素の JS は script 読み込み順 / ES modules、など）。さらに `.claude/file-size.json` の `max_bytes` / `max_lines` / `include` / `exclude` / `doc_globs` をスタックに合わせて設定する（既定は Python 向け: 49152 B / 600 行 / doc 40960 B。長行になりがちな言語は行数を 0 にしてバイトだけで測る）。`tests/file_size_allow.json` は `{}` のままにする。
-- `.claude/skills/review/references/project-rules.md`: タイトルのプロジェクト名だけ置換。A1–A11 は残す（事故ルールは A12+ に追記）。
+- `.claude/skills/review/references/project-rules.md`: タイトルのプロジェクト名だけ置換。A1–A18 は残す（事故ルールは A19+ に追記）。
 - **`review` のルーティング表を埋める**: `.claude/skills/review/SKILL.md` の表を採用スタックに合わせる（`src/**` などのパス → `code-review-expert`、独自の不変条件を持つ領域は専門スキル行を追加）。`<area>/**` の例示行は使わなければ削除。UI があるなら `ui-review` のコメント行を有効化する。
 - `.env.example`: 必要な環境変数名を並べる（値は空のまま）。
 - サンプルコードを最小化する場合: `core.py` / `utils.py` / `examples/example.py` を削除し、`tests/test_core.py` を `import <pkg>` するだけのスモークテストにする。**テストを 0 件にしない**（pytest は 0 件で exit 5 になり CI が落ちる）。
-- 技術スタックを足した場合: 依存は `uv add`、開発ツールは `uv add --dev`。フロントエンド等を足したら `.github/workflows/test-build.yml` にジョブを追加。
+- 技術スタックを足した場合: 依存は `uv add`、開発ツールは `uv add --dev`。フロントエンド等を足したら `.github/workflows/test-build.yml` にジョブを追加。サーバープロセス / ビルド無しの JS / 静的ファイル配信があるなら `references/stack-kits.md` の該当キットを展開する（このスキルと一緒に消えるので、使うものは今コピーする）。
+- 会話言語が日本語以外のプロジェクト: `.claude/hooks/require-japanese.py` と `.claude/settings.json` の `Stop` フック・`"language"` を削除し、`CLAUDE.md` の Language 行を直す。
 - **残すスキル**: `harvest`（完了時にテンプレートへ資産を戻す）と `review`（+ `code-review-expert`）は必ず残す。`ui-review` は UI が無いプロジェクトでは `.claude/skills/ui-review/` を削除し、`review` のルーティング表からも `ui-review` の行（コメント例を含む）を消す。
-- 不要なスキル（`drawio` など）はユーザーに確認して削除。
 
 ## 4. 検証する
 

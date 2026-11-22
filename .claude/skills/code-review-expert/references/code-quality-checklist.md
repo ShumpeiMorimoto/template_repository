@@ -95,6 +95,7 @@
 ### Numeric Boundaries
 
 - **Division by zero**: Missing check before division
+- **NaN propagation**: `0/0` in float / array arithmetic yields NaN instead of raising, and NaN passes `max` / `min` / clamp — it then poisons every recurrence it feeds (a price, a stock, a ledger). State the zero case where the division is written; a downstream clamp or filter is not a fix. A series that feeds a recurrence gets a finite-value check over a long run that includes the emptied state
 - **Integer overflow**: Large numbers exceeding safe integer range
 - **Floating point comparison**: Using `===` instead of epsilon comparison
 - **Negative values**: Index or count that shouldn't be negative
@@ -206,6 +207,13 @@ A helper function exists and is called, but the timing is wrong:
 - Cache invalidation called before the write → next read returns stale data
 
 **Question to ask for each helper call**: "If the next operation can fail or block, does this helper need to run BEFORE that operation, INSIDE its retry loop, or AFTER it?"
+
+### State & bookkeeping
+
+- **Event inferred from an absence**: "X is gone, so Y happened" (row deleted → completed, file missing → processed) holds only if every remover of X means Y. Enumerate the removers and make each report its reason through one function of the bookkeeping's owner
+- **Split / merge / copy of a tracked item**: a path that cuts or copies an item of a ledger, queue or registry states for EVERY resulting piece whether it is tracked or has left the books
+- **IDs reused after a rollback**: an undo that rewinds an id counter while registries, caches or logs still hold ids issued during the undone work makes new objects collide with stale ones. Never reuse ids; a rollback test creates something AFTER the undo and checks its id is new
+- **Wrapper that re-lists parameters**: it drops arguments added later — forward `*args` / `**kwargs`
 
 ### Unused imports / variables
 - Linters catch most, but they miss:

@@ -30,6 +30,9 @@
 - Secrets in git history or environment variables exposed to client
 - Excessive logging of PII or sensitive payloads
 - Missing data masking in error messages
+- Credentials in URL query strings — HTTP client errors embed the full request URL, so the key leaks through any exception text. Send keys in headers
+- Raw exception text (`str(e)`, `repr(e)`) in a response, broadcast or other client-visible field — log it server-side and return fixed generic text
+- Outbound payload built by stripping known-secret keys from an internal record (denylist): every field added later leaks by default. Build client payloads from an allowlist of public fields
 
 ## Supply Chain & Dependencies
 

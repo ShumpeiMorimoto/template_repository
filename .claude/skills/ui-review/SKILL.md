@@ -39,6 +39,8 @@ Read the project's UI rules (theme tokens, chart palette) first; the token metho
 6. **Privacy**: if the app has a privacy mode, every sensitive amount carries the masking marker; non-sensitive data does not.
 7. **Polling**: intervals pause when the page is hidden; shared data goes through the shared fetch hooks (no duplicate pollers).
 8. **Backend contract**: a field shown in the UI exists in the REAL API response (call it), not only in a mock.
+9. **Motion & layout shift**: every state change (enter/exit, reveal, value or rank change) has a transition built from the motion tokens — a bare `display:none` flip is a finding; a panel that appears later reserves its height so the content above it does not jump (compare before/after screenshots).
+10. **Harness blind spots**: an author `display:` rule beats the browser's `[hidden]{display:none}`, so an overlay toggled via `hidden` stays on top and blocks every click while scripted `el.click()` still passes — give it an explicit `[hidden]{display:none !important}` and drive real pointer clicks. A headless browser can report `prefers-reduced-motion: reduce` and silently skip every guarded animation — set the emulated media (Playwright: `reduced_motion="no-preference"`) before judging motion.
 
 ### 4. Report
 `[P0-P3] file:line — finding — rule (checklist item) — screenshot path`. List screenshots taken and every state that could not be rendered as "not verified".
