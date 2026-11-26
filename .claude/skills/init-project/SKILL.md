@@ -1,6 +1,6 @@
 ---
 name: init-project
-description: "One-time initialisation, run first in a new project made from this template. Cleans up git / remote, records the harvest baseline, replaces package / project / author placeholders, fills CLAUDE.md / README / review routing / file-size limits, deletes template-only files, regenerates the lock and venv, verifies, and finally deletes this skill. Use when the user says 「このテンプレートで新しいプロジェクトを始めて」「プロジェクトを初期化して」「init して」「プロジェクト名を設定して」."
+description: "One-time initialisation, run first in a new project made from this template. Cleans up git / remote, records the harvest baseline, replaces package / project / author placeholders, fills CLAUDE.md / README / review routing / file-size limits, deletes template-only files, regenerates the lock and venv, verifies, installs the Claude Code plugins declared in settings.json, and finally deletes this skill. Use when the user says 「このテンプレートで新しいプロジェクトを始めて」「プロジェクトを初期化して」「init して」「プロジェクト名を設定して」."
 ---
 
 # Init Project
@@ -46,9 +46,10 @@ uv --version
 - History inherited (`git log` shows template commits): record the current `HEAD`.
 - No inherited history (GitHub "Use this template", or a fresh `git init`): nothing to record (first run = whole history is correct).
 - Template not at `../template_repository`: also write `template_path`.
+- `template_commit` = the template commit this project started from (inherited history: the same `HEAD`; otherwise `git -C <template> rev-parse HEAD`, omitted if the template is not on this machine). `adopt-template` (run from the template) pulls later template updates from that commit on.
 
 ```json
-{ "last_feedback_commit": "<HEAD sha>", "last_feedback_date": "<today>", "template_path": "<optional>" }
+{ "last_feedback_commit": "<HEAD sha>", "last_feedback_date": "<today>", "template_commit": "<template sha>", "template_path": "<optional>" }
 ```
 
 ## 3. Replace placeholders
@@ -78,6 +79,7 @@ License "none": delete `LICENSE`, the README badge and License section, and `lic
 - README `Contributing` section (personal project; keep it if outside contributions are expected).
 - No UI: delete `.claude/skills/ui-review/`, plus the `ui-review` rows (including the commented example) in the `review` routing table and in the README.
 - Conversation language other than Japanese: delete `.claude/hooks/require-japanese.py`, the `Stop` hook and `"language"` in `.claude/settings.json`, and fix the Language line in `CLAUDE.md`.
+- `.claude/skills/adopt-template/` and its README row (it runs from the template against a target path; a project never needs its own copy).
 - **Skills that always stay**: `harvest`, `review` (+ `code-review-expert`).
 
 ## 5. Fill in the content
@@ -100,14 +102,40 @@ uv lock && uv sync
 uv run ruff check . && uv run ruff format --check . && uv run ty check . && uv run pytest   # includes the file-size / skill-reference guards
 # proof of zero residue — must print nothing
 grep -rnI 'your_package\|your-package-name\|your-repo-name\|yourusername\|Project Name\|Your Name\|your\.email\|HARVEST_LOG' \
-  --exclude-dir=.venv --exclude-dir=.git --exclude-dir=init-project .
-grep -nE 'YYYY-MM|init-project' README.md CLAUDE.md
+  --exclude-dir=.venv --exclude-dir=.git --exclude-dir=init-project --exclude-dir=harvest .   # harvest names the template's log on purpose
+grep -nE 'YYYY-MM|init-project|adopt-template' README.md CLAUDE.md
 ```
 
 If grep hits, fix and rerun. Do not move on until everything is green.
 
-## 7. Clean up
+## 7. Install the Claude Code plugins (mods)
+
+`.claude/settings.json` is the single source: `extraKnownMarketplaces` declares an inline (`"source": "settings"`)
+marketplace whose plugins are `git-subdir` sources pinned by `sha`, `enabledPlugins` names them. Read both from the file;
+never list plugin names here or install one that is not in it. (Inline because the upstream marketplace.json lives in a repo
+subdirectory and its `./<plugin>` sources resolve against the clone root, so referencing it fails at install.)
+
+```bash
+claude --version                       # SHA-pinned marketplace needs >= 2.1.324; not on PATH → ~/.local/bin/claude(.exe)
+claude plugin marketplace list         # must list every marketplace named in extraKnownMarketplaces
+claude plugin install <key of enabledPlugins> --scope project    # once per key
+claude plugin list                     # every enabledPlugins key installed and enabled
+```
+
+- `marketplace add` cannot create an inline marketplace and `claude -p` does not apply `extraKnownMarketplaces`: only an
+  **interactive session start in the trusted folder** registers it. Missing from `marketplace list` → ask the user to
+  restart Claude Code in this folder, then rerun the installs. Report it as pending if the user does not restart now.
+- Never run `claude plugin marketplace remove` on it: it also deletes the entries from the project's `settings.json`.
+- `git-subdir` `url` is a full `https://…git` URL: the `owner/repo` shorthand clones over SSH and fails on a machine
+  without a GitHub host key. An edit to the inline marketplace takes effect only at the next interactive session start
+  (`marketplace update` does not re-read settings).
+- Plugins are installed per clone (`~/.claude/plugins/cache/`), so each new machine repeats the `install` lines.
+- Mods run third-party code with hook privileges. Bump the pinned `sha` (one per plugin) only after reading the diff
+  between the two commits.
+- User declines a plugin: delete its `enabledPlugins` key (and the marketplace when nothing else uses it).
+
+## 8. Clean up
 
 - Delete this skill's directory `.claude/skills/init-project/` and remove `init-project` from `SKIPPED_SKILLS` in `tests/test_skill_references.py` (initialisation happens once). Run `uv run pytest` again afterwards.
 - Commit only when the user asks.
-- Finally report to the user: the changed files, the git / remote actions taken in step 0, and every `<...>` left unfilled.
+- Finally report to the user: the changed files, the git / remote actions taken in step 0, the plugins installed or pending a restart (step 7), and every `<...>` left unfilled.

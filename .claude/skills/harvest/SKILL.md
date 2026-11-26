@@ -19,9 +19,9 @@ project with a different domain and maybe a different stack?** When in doubt, le
 - Baseline: `last_feedback_commit` in `.claude/harvest.json`. First run = whole history.
 
 **Pull mode** (run from inside the template, sources = sibling projects): same steps with the roles swapped. Inventory each
-source read-only — one subagent per source, which reads the template's rules and `dev-docs/HARVEST_LOG.md` first and
+source read-only — one subagent per source, which reads the template's rules and `<template>/dev-docs/HARVEST_LOG.md` first and
 returns candidates with the verbatim source text. Never write to a source repository (no `harvest.json`, no dev-log line); record each
-source's `HEAD` in `dev-docs/HARVEST_LOG.md` as the baseline for the next pull. Evidence from two sources outranks one.
+source's `HEAD` in `<template>/dev-docs/HARVEST_LOG.md` as the baseline for the next pull. Evidence from two sources outranks one.
 
 ## 1. Inventory (source project)
 

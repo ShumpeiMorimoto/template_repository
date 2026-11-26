@@ -233,6 +233,8 @@ If the project has caches (file, in-memory, Redis):
 
 4. **Disk cache without staleness check** — code reads `cache.parquet` and uses it without comparing mtime. If the underlying writer has stopped running, the cache becomes load-bearing forever.
 
+5. **"Have I seen this?" state kept only in process memory** — a first-seen time, notified marker or dedupe window in a module-level dict resets on every restart, so an ongoing condition is announced as new again. Persist it (atomic write, retention bound) and fall back to memory when the file is corrupt or unwritable.
+
 **Detection:**
 ```bash
 # Find module-level dict caches

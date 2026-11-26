@@ -42,6 +42,7 @@ NUL
 .claude/*
 !.claude/settings.json
 !.claude/file-size.json
+!.claude/harvest.json
 !.claude/hooks/
 !.claude/skills/
 !.claude/agents/
@@ -68,3 +69,5 @@ logs/
 .scratch/
 
 # Do NOT ignore uv.lock — it should be committed for reproducible installs
+
+.claude/worktrees/

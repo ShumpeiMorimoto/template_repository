@@ -54,6 +54,18 @@
             "type": "command",
             "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-file-size.py\"",
             "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/format-python.py\"",
+            "if": "Edit(**/*.py)",
+            "timeout": 30
+          },
+          {
+            "type": "command",
+            "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/format-python.py\"",
+            "if": "Write(**/*.py)",
+            "timeout": 30
           }
         ]
       }
@@ -86,13 +98,21 @@
             "type": "command",
             "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-secrets.sh\"",
             "if": "Bash(git commit*)",
-            "timeout": 10
+            "timeout": 10,
+            "onFailure": "block"
           },
           {
             "type": "command",
             "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-lint.sh\"",
             "if": "Bash(git commit*)",
-            "timeout": 120
+            "timeout": 120,
+            "onFailure": "block"
+          },
+          {
+            "type": "command",
+            "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/block-destructive-git.py\"",
+            "timeout": 10,
+            "onFailure": "block"
           }
         ]
       }
@@ -104,10 +124,50 @@
             "type": "command",
             "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/require-japanese.py\"",
             "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/require-verification.py\"",
+            "timeout": 600
           }
         ]
       }
     ]
+  },
+  "enabledPlugins": {
+    "token-weather@claude-code-playground-mods": true,
+    "blast-radius@claude-code-playground-mods": true
+  },
+  "extraKnownMarketplaces": {
+    "claude-code-playground-mods": {
+      "source": {
+        "source": "settings",
+        "name": "claude-code-playground-mods",
+        "plugins": [
+          {
+            "name": "token-weather",
+            "source": {
+              "source": "git-subdir",
+              "url": "https://github.com/anthropics/claude-code-playground.git",
+              "path": "claude-code/mods/token-weather",
+              "sha": "569c5283d9a0a7ee7938df85bb32e4f48cbb8c86"
+            }
+          },
+          {
+            "name": "blast-radius",
+            "source": {
+              "source": "git-subdir",
+              "url": "https://github.com/anthropics/claude-code-playground.git",
+              "path": "claude-code/mods/blast-radius",
+              "sha": "569c5283d9a0a7ee7938df85bb32e4f48cbb8c86"
+            }
+          }
+        ],
+        "owner": {
+          "name": "anthropics/claude-code-playground"
+        }
+      }
+    }
   },
   "language": "japanese"
 }

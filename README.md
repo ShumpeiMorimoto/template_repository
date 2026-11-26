@@ -130,15 +130,20 @@ This repository ships a [Claude Code](https://docs.claude.com/en/docs/claude-cod
 | Path | Purpose |
 |------|---------|
 | `CLAUDE.md` | Project rules loaded into every session |
-| `.claude/settings.json` | Denies reading `.env` / credentials; wires the hooks below |
+| `.claude/settings.json` | Denies reading `.env` / credentials; wires the hooks below; declares the Claude Code plugins (mods) installed at init, pinned to a commit |
 | `.claude/hooks/check-secrets.sh` | Blocks `git commit` when staged files contain secrets or `.env` files |
 | `.claude/hooks/check-lint.sh` | Blocks `git commit` when staged Python fails ruff / ruff format / ty |
+| `.claude/hooks/block-destructive-git.py` | Blocks `git stash/reset/checkout/restore/clean` and force push (the working tree is shared with parallel agents) |
 | `.claude/hooks/require-*-model.py` | Requires an explicit `model` on subagents and workflows, plus the standard rules footer on subagent prompts |
 | `.claude/hooks/require-japanese.py` | Blocks a final reply that is mostly English (conversation language is Japanese) |
+| `.claude/hooks/require-verification.py` | Stop hook: blocks turn end until ruff / format / ty / pytest pass on the current working tree (cached per tree fingerprint in `.scratch/verify-state.json`) |
+| `.claude/hooks/format-python.py` | Runs `ruff format` on every `.py` file Claude edits or writes |
+| `.worktreeinclude` | Copies git-ignored `.env` files into worktrees Claude creates |
 | `.claude/skills/init-project/` | One-time: run first in a new project made from this template (deletes itself) |
 | `.claude/skills/review/` | Review entry point: routes a diff to specialist skills, merges and verifies one report; holds the repo rules (`references/project-rules.md`) |
 | `.claude/skills/code-review-expert/` | Generic structured quick/full code review with checklists |
 | `.claude/skills/harvest/` | Feeds reusable assets of a finished project back into the template |
+| `.claude/skills/adopt-template/` | Template-only: run from here to apply the template's assets to a repository that already exists, or to pull later template updates into a project |
 | `.claudeignore` | Keeps caches, data and lock files out of Claude's context |
 
 Personal overrides go in `.claude/settings.local.json` (git-ignored).

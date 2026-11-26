@@ -63,6 +63,24 @@ colors: {
 ## Pitfall: global input styles
 A base `input/select/textarea` rule that sets a background under `.dark` overrides utilities; a transparent input needs `bg-transparent dark:bg-transparent`.
 
+## Pitfall: base element styles in CSS
+The parity test scans component source, not the stylesheet. A base rule such as `h1, h2, h3 { @apply text-slate-900 }` gives every heading a single-theme colour that no class-level check sees (the heading vanishes in dark). Base rules use the tokens too (`@apply text-ink`); grep the stylesheet for palette colours when adopting the kit.
+
+## Type scale and weight (guarded by `type-scale.test.js`)
+| Use | Class | Size |
+|---|---|---|
+| Caption, table micro-label, badge | `text-3xs` | 10px (the floor) |
+| Dense label, secondary row | `text-2xs` | 11px |
+| Small body | `text-xs` | 12px |
+| Body, control | `text-sm` | 14px |
+| Input (iOS zooms below this) | `text-base` | 16px |
+
+```js
+// tailwind.config.js → theme.extend
+fontSize: { '3xs': '0.625rem', '2xs': '0.6875rem' },
+```
+Never `text-[Npx]`: per-site sizes drift into a dozen near-identical values; a new size is added to the scale. Weights: `font-bold` for the value or title, `font-medium` for the label that names it — in a label/value pair one side is bold. De-emphasised ink (`text-ink-muted`, `text-ink-faint`) never carries `font-bold`. Check which weights the loaded font ships: a class for a missing weight silently renders the nearest one.
+
 ## Chart / canvas colours
 Canvas and chart libraries cannot read CSS classes. Keep surface-dependent colours (tooltip, grid, axis text, background) in one function and read the theme through one hook; series colours stay theme-invariant.
 ```js

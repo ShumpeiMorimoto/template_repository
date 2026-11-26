@@ -74,3 +74,30 @@
 | デザインブリーフ必須、効果音、ゲーム固有の UI 規則 | PROJECT-ONLY |
 | 各プロジェクトのドメイン規則・事故の経緯・領域別 `CLAUDE.md`・テストスイート用ランナー群 | PROJECT-ONLY |
 | 3件の旧 hooks / 旧 `code-review-expert` | テンプレート側が新しい（差分はテンプレートの改善のみ） |
+
+## 2026-11-23 round 4（前プロジェクトから。UI の手直し一巡ぶん）
+
+### 採用
+
+| 項目 | 分類 | 反映先 |
+|---|---|---|
+| 1. `harvest.json` を追跡対象にする（`.claude/*` の ignore に埋もれ、基準コミットが clone で消える） | CORE | `.gitignore` |
+| 2. 「選ばれていないデフォルト」検査（検出 grep + 10項目 + 判定基準。問いは「この要素はどの判断を表しているか」） | STACK-KIT | `.claude/skills/ui-review/references/unchosen-defaults.md`, `ui-review` チェックリスト 11 |
+| 3. 文字サイズの名前付きスケールと太さの規則 + ガードテスト（任意サイズ禁止 / 弱いインクに太字禁止、マッチャーの自己検査つき） | STACK-KIT | `references/type-scale.test.js`, `references/theme-tokens.md` |
+| 4. ダイアログは共通フック1つ（Escape / フォーカストラップ / フォーカス復帰）、入れ子は最前面だけがキーに応答、採用箇所を数える | STACK-KIT | `ui-review` チェックリスト 5 |
+| 5. 描画確認の前に「配信中のページが今のビルドか」を確かめる、スクリーンショットは目を細めて主役を1つ言う | STACK-KIT | `ui-review` 手順 2 |
+| 6. スタイルシートの base 規則はテーマ parity テストの死角（見出しが片テーマで消える） | STACK-KIT | `references/theme-tokens.md` |
+| 7. 「既に見たか」の状態（初回検知時刻・通知済み・重複排除窓）がプロセスメモリだけ → 再起動のたびに新着扱い | CORE | `code-review-expert/references/runtime-health-checklist.md` §10 |
+| 8. `table[key] \|\| fallback` は空文字 / 0 の正当な項目を選べなくする（`??`） | CORE | `code-review-expert/references/code-quality-checklist.md` |
+| 9. 一括置換は Edit か bytes 保持スクリプト。Git Bash の `perl -pi` は渡した全ファイルを CRLF にしうる（検出コマンドつき） | CORE | `CLAUDE.md` Environment |
+
+### 不採用
+
+| 項目 | 理由 |
+|---|---|
+| アプリコード（ダイアログ用フック本体、チャート時間軸ヘルパー、数値タイルの変更） | パターンをチェックリスト行にすれば足りる（round 2 と同じ判断）。時間軸は特定チャートライブラリ依存 |
+| UI 方針の1行を `CLAUDE.md` 本体へ | UI の無いプロジェクトでは不要。キットの導入手順に置いた |
+| 通知状態の永続化の実装、再起動手順、生成メタの派生元変更 | PROJECT-ONLY（仕組みだけ 7 に抽出 / 派生元の一本化は A6 で既出） |
+| 画面名称の変更とドキュメント追従、調査レポート本文 | PROJECT-ONLY。調査の結論は 2 に蒸留済み |
+| エージェント規律フック v2、`harvest` スキル本文 | テンプレート側が既に新しい |
+| 「共通化を N 箇所中 N-1 にしか適用しなかった」「見た目のクラス文字列に固定したテストが整理で壊れた」 | A1 / A13 で既出 |

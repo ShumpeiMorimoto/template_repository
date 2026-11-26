@@ -82,7 +82,7 @@
 ### Null/Undefined Handling
 
 - **Missing null checks**: Accessing properties on potentially null objects
-- **Truthy/falsy confusion**: `if (value)` when `0` or `""` are valid
+- **Truthy/falsy confusion**: `if (value)` when `0` or `""` are valid; likewise `table[key] || fallback` when a table entry is legitimately `""` / `0` (that entry can never be selected — use `??`)
 - **Optional chaining overuse**: `a?.b?.c?.d` hiding structural issues
 - **Null vs undefined inconsistency**: Mixed usage without clear convention
 
